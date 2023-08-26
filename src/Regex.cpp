@@ -6,9 +6,12 @@ Regex::Regex(std::string in) : reg(in), matchStart(false), matchEnd(false){
     if(in.size() && in[in.size()-1] == '$' && in.size() > 1 && in[in.size()-2] != '\\')
         matchEnd = true;
     processedReg = preprocess();
+    parse();
 }
 
-Regex::~Regex(){}
+Regex::~Regex(){
+    delete nfa;
+}
 
 std::string Regex::preprocess(){
     std::string ret = "";
@@ -106,7 +109,7 @@ std::string Regex::preprocess(){
 
             std::string previousChar = findPrevChar(ret);
             char t = previousChar[0];
-            if(previousChar[0] == '\000')
+            if(!previousChar.size() || previousChar[0] == '\000')
                 throw std::runtime_error("No group or character to capture");
 
             for(int j = 0; j < previousChar.size(); j++){ret.pop_back();}
@@ -204,6 +207,8 @@ std::string Regex::findPrevChar(std::string s){
         }
         throw std::runtime_error("Unbalanced parenthesis at position " + std::to_string(p));
     }
+    else if((s[p] == '?' || s[p] == '+' || s[p] == '*' || s[p] == '|' || s[p] == ')' || s[p] == ']') && p-1 >= 0 && s[p-1] != '\\')
+        return "";
     else
         return std::string(1, s[p]);
 }

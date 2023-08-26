@@ -38,6 +38,29 @@ class Regex{
     std::vector<int> pos; 
     
     bool matchStart;
-    
     bool matchEnd;
+
+    struct CharacterClass{
+        CharacterClass(std::string, bool);
+        ~CharacterClass();
+        std::unordered_set<char> characters;
+        bool negated;
+        bool epsilon;
+        bool operator==(char);
+    };
+
+    struct NFAState{
+        NFAState();
+        ~NFAState();
+        bool accept;
+        int ID;
+        std::vector<std::pair<Regex::CharacterClass, Regex::NFAState*>> transitions;
+    };
+
+    NFAState* nfa;
+
+    void parse();
+    std::vector<Regex::NFAState*> parse_(std::string&, int&);
+    std::vector<Regex::NFAState*> parseChar(char);
+    std::vector<Regex::NFAState*> parseChar(Regex::CharacterClass);
 };

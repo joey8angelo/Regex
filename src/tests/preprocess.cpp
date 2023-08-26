@@ -11,7 +11,7 @@ int main(){
         std::cout << r.getProcessedExpression() << std::endl;
     }
     {
-        Regex r("abcd[a\\[?+*]"); // do not need to escape special characters - except for [ and ]
+        Regex r("abcd[a\\[?+*]"); // do not need to escape special characters - except for [ and ] inside character classes
         std::cout << r.getProcessedExpression() << std::endl;
     }
     {
