@@ -1,5 +1,10 @@
 #include "../headers/Regex.h"
 
+/*
+    Remove outer brackets and parse the inside
+    If the first character is a ^ then the class is negated
+    All characters are allowed without '\\' except for [ and ]
+*/
 Regex::CharacterClass::CharacterClass(std::string ch, bool e) : negated(false), epsilon(e){
     if(epsilon)
         return;
@@ -9,7 +14,7 @@ Regex::CharacterClass::CharacterClass(std::string ch, bool e) : negated(false), 
         hasBrackets = true;
         p++;
     }
-    if(hasBrackets && ch.size() > 2 && ch[1] == '^'){
+    if(ch.size() > 1+p && ch[0+p] == '^'){
         negated = true;
         p++;
     }
@@ -27,6 +32,10 @@ Regex::CharacterClass::CharacterClass(std::string ch, bool e) : negated(false), 
 }
 Regex::CharacterClass::~CharacterClass() {}
 
+/*
+    Returns true if the lhs is an element of the character set
+    Returns the opposite if negated is true
+*/
 bool Regex::CharacterClass::operator==(char c){
     bool t = this->characters.find(c) != this->characters.end();
     return negated ? !t : t; 

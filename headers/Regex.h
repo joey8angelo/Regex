@@ -6,40 +6,29 @@ class Regex{
     Regex(std::string);
     ~Regex();
     std::string getProcessedExpression(){return this->processedReg;}
+    void printNFAStates();
     private:
-    
-    /* 
-    process the input string into a usable form to convert to an NFA, throws syntax errors
-    . -> [^\n\r]
-    \\w -> [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_]
-    \\W -> [^abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_]
-    \\d -> [0123456789]
-    \\D -> [^0123456789]
-    \\s -> [\t\n\v\f\r \xA0]
-    \\S -> [^\t\n\v\f\r \xA0]
-    .{a} single digit repeat . a times
-    .{a,} single digit with comma repeat . a times concat .*
-    .{a,b} two digits comma separated repeat . a times repeat .? a-b times 
-    */
     std::string preprocess();
-
-    /*
-    Matches and returns a group/character class/single character from the end of the given string
-    */
     std::string findPrevChar(std::string);
     
     std::string reg;
     std::string processedReg;
     
-    // when processing escape characters or interval operators 
-    // the resulting string changes length so "\d\d" -> "[0-9][0-9]""
-    //                                          0 1 ->   0000011111
-    // pos keeps track of this change so error messages can have more specific locations
+    /*
+        when processing escape characters or interval operators 
+        the resulting string changes length so "\d\d" -> "[0-9][0-9]""
+                                                 0 1  ->  0000011111
+        pos keeps track of this change so error messages can have more specific locations
+    */
     std::vector<int> pos; 
-    
     bool matchStart;
     bool matchEnd;
-
+    /*
+        A more space efficient way of making character classes
+        instead of translating a character class [a-z] -> (a|b|c|d|e|f..)
+        the CharacterClass uses a set to easily lookup characters that could be part of the group
+        also makes negating a group much simpler by !ing the result of looking up a character
+    */
     struct CharacterClass{
         CharacterClass(std::string, bool);
         ~CharacterClass();
@@ -48,19 +37,28 @@ class Regex{
         bool epsilon;
         bool operator==(char);
     };
-
+    /*
+        A NFA state, according to thompson's construction no state will have more than 2 outgoing edges
+        and if the edge is not epsilon it will only ever have 1 outgoing edge
+        the edge is a pointer to other NFA states where the character to transition on is a CharacterClass
+        Where epsilon is a boolean value in CharacterClass
+    */
     struct NFAState{
         NFAState();
+        NFAState(char);
+        NFAState(std::string);
         ~NFAState();
         bool accept;
         int ID;
-        std::vector<std::pair<Regex::CharacterClass, Regex::NFAState*>> transitions;
+        Regex::CharacterClass c;
+        Regex::NFAState* out1;
+        Regex::NFAState* out2;
     };
-
     NFAState* nfa;
-
     void parse();
     std::vector<Regex::NFAState*> parse_(std::string&, int&);
-    std::vector<Regex::NFAState*> parseChar(char);
-    std::vector<Regex::NFAState*> parseChar(Regex::CharacterClass);
+    std::vector<Regex::NFAState*> parseChar(std::string&, int&, std::string);
+    std::vector<Regex::NFAState*> parseChar(std::string&, int&, char);
+    std::vector<Regex::NFAState*> parseChar(std::string&, int&, Regex::NFAState*);
+    void deleteNFA();
 };
