@@ -10,9 +10,54 @@ Regex::Regex(std::string in) : reg(in), matchStart(false), matchEnd(false){
 }
 
 Regex::~Regex(){
-    delete nfa;
+    deleteNFA();
 }
 
+/*
+    Collects the NFA states in a map based on their IDs and then deletes them
+*/
+void Regex::deleteNFA(){
+    std::unordered_map<int, Regex::NFAState*> states;
+    std::vector<Regex::NFAState*> stack;
+    states[nfa->ID] = nfa;
+    stack.push_back(nfa);
+
+    while(stack.size()){
+        Regex::NFAState* top = stack[stack.size()-1];
+        stack.pop_back();
+
+        if(top->out1 != nullptr){
+            if(states.find(top->out1->ID) == states.end()){
+                stack.push_back(top->out1);
+                states[top->out1->ID] = top->out1;
+            }
+        }
+        if(top->out2 != nullptr){
+            if(states.find(top->out2->ID) == states.end()){
+                stack.push_back(top->out2);
+                states[top->out2->ID] = top->out2;
+            }
+        }
+    }
+
+    for(auto i = states.begin(); i != states.end(); i++){
+        delete i->second;
+    }
+}
+
+/* 
+    process the input string into a usable form to convert to an NFA, throws syntax errors
+    . -> [^\n\r]
+    \\w -> [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_]
+    \\W -> [^abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_]
+    \\d -> [0123456789]
+    \\D -> [^0123456789]
+    \\s -> [\t\n\v\f\r \xA0]
+    \\S -> [^\t\n\v\f\r \xA0]
+    .{a} single digit repeat . a times
+    .{a,} single digit with comma repeat . a times concat .*
+    .{a,b} two digits comma separated repeat . a times repeat .? a-b times 
+*/
 std::string Regex::preprocess(){
     std::string ret = "";
     std::unordered_map<std::string, std::string> special = {{".", "^\n\r"}, {"\\S", "^\t\n\v\f\r \xA0"}, {"\\s", "\t\n\v\f\r \xA0"},
@@ -40,13 +85,8 @@ std::string Regex::preprocess(){
         }
 
         // if . is found
-        if(special.find(std::string(1, this->reg[i])) != special.end()){
-            if(charClass){
-                throw std::runtime_error("Cannot put wildcard in character class at position " + std::to_string(i));
-            }
-
+        if(!charClass && special.find(std::string(1, this->reg[i])) != special.end()){
             ret += "[" + special[std::string(1, this->reg[i])] + "]";
-
             for(int j = 0; j < special[std::string(1, this->reg[i])].size()+2; j++){pos.push_back(i);}
         }
         // escape character
@@ -70,7 +110,7 @@ std::string Regex::preprocess(){
             i++;
         }
         // interval operator
-        else if(this->reg[i] == '{'){
+        else if(!charClass && this->reg[i] == '{'){
             int init = i;
             i++;
             int a = -1;
@@ -155,14 +195,14 @@ std::string Regex::preprocess(){
         else{
             if(this->reg[i] == ']')
                 charClass = false;
-            else if(this->reg[i] == '(')
+            else if(!charClass &&this->reg[i] == '(')
                 paren++;
-            else if(this->reg[i] == ')'){
+            else if(!charClass && this->reg[i] == ')'){
                 if(!paren)
                     throw std::runtime_error("Unbalanced parenthesis at position " + std::to_string(i));
                 paren--;
             }
-            else if(this->reg[i] == '}')
+            else if(!charClass && this->reg[i] == '}')
                 throw std::runtime_error("No opening bracket for closing bracket at position " + std::to_string(i));
             ret += this->reg[i];
             pos.push_back(i);
@@ -176,7 +216,7 @@ std::string Regex::preprocess(){
 }
 
 /*
-Matches and returns a group/character class/single character from the end of the given string
+    Finds and returns a group/character class/single character from the end of the given string
 */
 std::string Regex::findPrevChar(std::string s){
     
@@ -211,4 +251,84 @@ std::string Regex::findPrevChar(std::string s){
         return "";
     else
         return std::string(1, s[p]);
+}
+/*
+    Prints all the NFA states and their transitions (for testing)
+*/
+void Regex::printNFAStates(){
+    std::unordered_map<int, Regex::NFAState*> states;
+    std::vector<Regex::NFAState*> stack;
+    states[nfa->ID] = nfa;
+    stack.push_back(nfa);
+
+    std::cout << "States:" << std::endl << std::endl;
+
+    while(stack.size()){
+        Regex::NFAState* top = stack[stack.size()-1];
+        stack.pop_back();
+
+        std::cout << "State " << top->ID << std::endl;
+        if(top->accept)
+            std::cout << "    ACCEPT" << std::endl;
+        if(top->out1 != nullptr){
+            if(states.find(top->out1->ID) == states.end()){
+                stack.push_back(top->out1);
+                states[top->out1->ID] = top->out1;
+            }
+            std::cout << "    goes to state " << top->out1->ID << " on ";  
+            std::string trans = "";
+            if(top->c.epsilon)
+                trans = "epsilon";
+            else{
+                auto j = top->c.characters.begin();
+                if(top->c.negated)
+                    trans += "! ";
+                trans += "'";
+                if(!isprint(*j))
+                    trans += "nonprintable";
+                else
+                    trans += *j;
+                trans += "'";
+                for(j++; j != top->c.characters.end(); j++){
+                    trans += ", '";
+                    if(!isprint(*j))
+                        trans += "nonprintable";
+                    else
+                        trans += *j;
+                    trans += "'";
+                }
+            }
+            std::cout << trans << std::endl;
+        }
+        if(top->out2 != nullptr){
+            if(states.find(top->out2->ID) == states.end()){
+                stack.push_back(top->out2);
+                states[top->out2->ID] = top->out2;
+            }
+            std::cout << "    goes to state " << top->out2->ID << " on ";  
+            std::string trans = "";
+            if(top->c.epsilon)
+                trans = "epsilon";
+            else{
+                auto j = top->c.characters.begin();
+                if(top->c.negated)
+                    trans += "! ";
+                trans = "'";
+                if(!isprint(*j))
+                    trans += "nonprintable";
+                else
+                    trans += *j;
+                trans += "'";
+                for(j++; j != top->c.characters.end(); j++){
+                    trans = ", '";
+                    if(!isprint(*j))
+                        trans += "nonprintable";
+                    else
+                        trans += *j;
+                    trans += "'";
+                }
+            }
+            std::cout << trans << std::endl;
+        }
+    }
 }
