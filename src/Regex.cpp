@@ -14,35 +14,13 @@ Regex::~Regex(){
 }
 
 /*
-    Collects the NFA states in a map based on their IDs and then deletes them
+    Deletes nfa
 */
 void Regex::deleteNFA(){
-    std::unordered_map<int, Regex::NFAState*> states;
-    std::vector<Regex::NFAState*> stack;
-    states[nfa->ID] = nfa;
-    stack.push_back(nfa);
-
-    while(stack.size()){
-        Regex::NFAState* top = stack[stack.size()-1];
-        stack.pop_back();
-
-        if(top->out1 != nullptr){
-            if(states.find(top->out1->ID) == states.end()){
-                stack.push_back(top->out1);
-                states[top->out1->ID] = top->out1;
-            }
-        }
-        if(top->out2 != nullptr){
-            if(states.find(top->out2->ID) == states.end()){
-                stack.push_back(top->out2);
-                states[top->out2->ID] = top->out2;
-            }
-        }
-    }
-
-    for(auto i = states.begin(); i != states.end(); i++){
+    for(auto i = nfa.begin(); i != nfa.end(); i++){
         delete i->second;
     }
+    nfa.clear();
 }
 
 /* 
@@ -256,32 +234,20 @@ std::string Regex::findPrevChar(std::string s){
     Prints all the NFA states and their transitions (for testing)
 */
 void Regex::printNFAStates(){
-    std::unordered_map<int, Regex::NFAState*> states;
-    std::vector<Regex::NFAState*> stack;
-    states[nfa->ID] = nfa;
-    stack.push_back(nfa);
-
     std::cout << "States:" << std::endl << std::endl;
 
-    while(stack.size()){
-        Regex::NFAState* top = stack[stack.size()-1];
-        stack.pop_back();
-
-        std::cout << "State " << top->ID << std::endl;
-        if(top->accept)
+    for(auto i = this->nfa.begin(); i != this->nfa.end(); i++){
+        std::cout << "State " << i->first << std::endl;
+        if(i->second->ID == nfaAcc)
             std::cout << "    ACCEPT" << std::endl;
-        if(top->out1 != nullptr){
-            if(states.find(top->out1->ID) == states.end()){
-                stack.push_back(top->out1);
-                states[top->out1->ID] = top->out1;
-            }
-            std::cout << "    goes to state " << top->out1->ID << " on ";  
+        if(i->second->out1 != nullptr){
+            std::cout << "    goes to state " << i->second->out1->ID << " on ";  
             std::string trans = "";
-            if(top->c.epsilon)
+            if(i->second->c.epsilon)
                 trans = "epsilon";
             else{
-                auto j = top->c.characters.begin();
-                if(top->c.negated)
+                auto j = i->second->c.characters.begin();
+                if(i->second->c.negated)
                     trans += "! ";
                 trans += "'";
                 if(!isprint(*j))
@@ -289,7 +255,7 @@ void Regex::printNFAStates(){
                 else
                     trans += *j;
                 trans += "'";
-                for(j++; j != top->c.characters.end(); j++){
+                for(j++; j != i->second->c.characters.end(); j++){
                     trans += ", '";
                     if(!isprint(*j))
                         trans += "nonprintable";
@@ -300,18 +266,14 @@ void Regex::printNFAStates(){
             }
             std::cout << trans << std::endl;
         }
-        if(top->out2 != nullptr){
-            if(states.find(top->out2->ID) == states.end()){
-                stack.push_back(top->out2);
-                states[top->out2->ID] = top->out2;
-            }
-            std::cout << "    goes to state " << top->out2->ID << " on ";  
+        if(i->second->out2 != nullptr){
+            std::cout << "    goes to state " << i->second->out2->ID << " on ";  
             std::string trans = "";
-            if(top->c.epsilon)
+            if(i->second->c.epsilon)
                 trans = "epsilon";
             else{
-                auto j = top->c.characters.begin();
-                if(top->c.negated)
+                auto j = i->second->c.characters.begin();
+                if(i->second->c.negated)
                     trans += "! ";
                 trans = "'";
                 if(!isprint(*j))
@@ -319,8 +281,8 @@ void Regex::printNFAStates(){
                 else
                     trans += *j;
                 trans += "'";
-                for(j++; j != top->c.characters.end(); j++){
-                    trans = ", '";
+                for(j++; j != i->second->c.characters.end(); j++){
+                    trans += ", '";
                     if(!isprint(*j))
                         trans += "nonprintable";
                     else
@@ -331,4 +293,39 @@ void Regex::printNFAStates(){
             std::cout << trans << std::endl;
         }
     }
+    std::cout << std::endl;
+}
+void Regex::printDFAStates(){
+    std::cout << "States:" << std::endl << std::endl;
+
+    for(auto i = this->dfa.begin(); i != this->dfa.end(); i++){
+        std::cout << "State " << i->second->ID;
+        if(i->second->accept)
+            std::cout << " - ACCEPT";
+        std::cout << std::endl;
+
+        for(auto j : i->second->transitions){
+            std::cout << "    goes to state " << j.second->ID << " on ";
+            std::string trans = "";
+            auto x = j.first.characters.begin();
+            if(j.first.negated)
+                trans += "! ";
+            trans += "'";
+            if(!isprint(*x))
+                trans += "nonprintable";
+            else
+                trans += *x;
+            trans += "'";
+            for(x++; x != j.first.characters.end(); x++){
+                trans += ", '";
+                if(!isprint(*x))
+                    trans += "nonprintable";
+                else
+                    trans += *x;
+                trans += "'";
+            }
+            std::cout << trans << std::endl;
+        }
+    }
+    std::cout << std::endl;
 }
