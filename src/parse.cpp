@@ -19,9 +19,7 @@ void Regex::parse(){
         nfaAcc = t[1]->out2->ID;
     }
     id=0;
-    constructDFA();
-    id=0;
-    //deleteNFA();
+    printNFAStates();
 }
 
 /*
@@ -286,79 +284,6 @@ std::vector<Regex::NFAState*> Regex::parseChar(std::string& in, int& currPos, Re
     return {n, n};
 }
 
-void Regex::constructDFA(){
-    std::set<int> s0 = epsilonClosure(nfa[nfaStart]);
-    s0.insert(nfaStart);
-    dfa[s0] = new DFAState(id++);
-    if(s0.find(nfaAcc) != s0.end())
-        dfa[s0]->accept = true;
-    dfaStart = dfa[s0];
-    std::vector<std::set<int>> workList;
-    workList.push_back(s0);
-
-    while(workList.size()){
-        std::set<int> q = workList[workList.size()-1];
-        workList.pop_back();
-        std::pair<std::unordered_set<char>,std::unordered_set<char>> ch = collectChars(q);
-
-        makeTransitions(workList, q, ch.first, false);
-
-        // negated character classes, currentTransitions is cleared so that in case a negated transition shares
-        // a transition state, say [ab] -> {1,5,2} and [^ab] -> {1,5,2}, a new transition is made instead of
-        // merging the character class into the other character class
-        makeTransitions(workList, q, ch.second, true);
-    }
-}
-
-/*
-    Goes through characters the current set of nfa states (dfa state) can transition out on,
-    collecting the states into one set. If the current character goes to a state that the current set 
-    transitions to already, the character will be merged into the existing transitions CharacterClass
-*/
-void Regex::makeTransitions(std::vector<std::set<int>>& workList, std::set<int>& q, std::unordered_set<char>& ch, bool negated){
-    std::unordered_map<int,int> currentTransitions;
-    // for each character that the set can transition on
-    for(char c : ch){
-        std::set<int> t;
-        // for each state in the set
-        for(int s : q){
-            // if the state does not transition on epsilon and the current character is an element of its CharacterClass
-            if(!nfa[s]->c.epsilon && negated ? !(nfa[s]->c == c) : nfa[s]->c == c){
-                // nfa states only transition on characters on out1
-                t.insert(nfa[s]->out1->ID);
-                auto temp = epsilonClosure(nfa[s]->out1);
-                for(int v : temp){
-                    t.insert(v);
-                }
-            }
-        }
-        Regex::DFAState* n;
-        if(dfa.find(t) != dfa.end()){
-            n = dfa[t];
-            // if the set that was just made exists already, and the current state transitions to it
-            // then we can add the current character to its CharacterClass and continue without pushing the transition
-            if(currentTransitions.find(n->ID) != currentTransitions.end()){
-                dfa[q]->transitions[currentTransitions[n->ID]].first.characters.insert(c);
-                continue;
-            }
-            // if the set exists and the current state does not transition to it already then add the currentTransition
-            // and move on to pushing the transition to the state
-            else
-                currentTransitions[n->ID] = dfa[q]->transitions.size();
-        }
-        else{
-            n = new DFAState(id++);
-            dfa[t] = n;
-            if(t.find(nfaAcc) != t.end())
-                dfa[t]->accept = true;
-            workList.push_back(t);
-            currentTransitions[n->ID] = dfa[q]->transitions.size();
-        }
-        dfa[q]->transitions.push_back(std::make_pair(Regex::CharacterClass(std::string(1, c), false), n));
-        dfa[q]->transitions[dfa[q]->transitions.size()-1].first.negated = negated;
-    }
-}
-
 /*
     Given a state compute what states are reachable through epsilon transitions
 */
@@ -380,22 +305,4 @@ std::set<int> Regex::epsilonClosure(Regex::NFAState* s){
         }
     }
     return states;
-}
-
-/*
-    Given a set of nfa states (a dfa state) collect the characters that the states transition out of
-    collects negated and regular characters separately for when transitions are computed they are not treated the same
-*/
-std::pair<std::unordered_set<char>,std::unordered_set<char>> Regex::collectChars(std::set<int>& s){
-    std::unordered_set<char> set;
-    std::unordered_set<char> nset;
-    for(int i : s){
-        for(char j : nfa[i]->c.characters){
-            if(nfa[i]->c.negated)
-                nset.insert(j);
-            else
-                set.insert(j);
-        }
-    }
-    return std::make_pair(set,nset);
 }

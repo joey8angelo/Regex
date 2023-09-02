@@ -295,37 +295,3 @@ void Regex::printNFAStates(){
     }
     std::cout << std::endl;
 }
-void Regex::printDFAStates(){
-    std::cout << "States:" << std::endl << std::endl;
-
-    for(auto i = this->dfa.begin(); i != this->dfa.end(); i++){
-        std::cout << "State " << i->second->ID;
-        if(i->second->accept)
-            std::cout << " - ACCEPT";
-        std::cout << std::endl;
-
-        for(auto j : i->second->transitions){
-            std::cout << "    goes to state " << j.second->ID << " on ";
-            std::string trans = "";
-            auto x = j.first.characters.begin();
-            if(j.first.negated)
-                trans += "! ";
-            trans += "'";
-            if(!isprint(*x))
-                trans += "nonprintable";
-            else
-                trans += *x;
-            trans += "'";
-            for(x++; x != j.first.characters.end(); x++){
-                trans += ", '";
-                if(!isprint(*x))
-                    trans += "nonprintable";
-                else
-                    trans += *x;
-                trans += "'";
-            }
-            std::cout << trans << std::endl;
-        }
-    }
-    std::cout << std::endl;
-}

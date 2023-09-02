@@ -6,9 +6,8 @@ class Regex{
     Regex(std::string);
     ~Regex();
     std::string getProcessedExpression(){return this->processedReg;}
-    void printNFAStates();
-    void printDFAStates();
     private:
+    void printNFAStates();
     std::string preprocess();
     std::string findPrevChar(std::string);
     
@@ -54,22 +53,6 @@ class Regex{
         Regex::NFAState* out1;
         Regex::NFAState* out2;
     };
-    struct DFAState{
-        DFAState(int);
-        ~DFAState();
-        bool accept;
-        int ID;
-        std::vector<std::pair<Regex::CharacterClass, Regex::DFAState*>> transitions;
-    };
-    struct HashSet{
-        std::size_t operator()(const std::set<int>& s) const{
-            std::string t = "";
-            for(int i : s){
-                t += std::to_string(i) + " ";
-            }
-            return std::hash<std::string>{}(t);
-        }
-    };
     int nfaStart;
     int nfaAcc;
     std::unordered_map<int, Regex::NFAState*> nfa;
@@ -79,10 +62,5 @@ class Regex{
     std::vector<Regex::NFAState*> parseChar(std::string&, int&, char);
     std::vector<Regex::NFAState*> parseChar(std::string&, int&, Regex::NFAState*);
     void deleteNFA();
-    std::unordered_map<std::set<int>, Regex::DFAState*, HashSet> dfa;
-    Regex::DFAState* dfaStart;
-    void constructDFA();
-    void makeTransitions(std::vector<std::set<int>>&, std::set<int>&, std::unordered_set<char>&, bool);
     std::set<int> epsilonClosure(Regex::NFAState*);
-    std::pair<std::unordered_set<char>,std::unordered_set<char>> collectChars(std::set<int>&);
 };
