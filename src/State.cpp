@@ -6,7 +6,3 @@ Regex::NFAState::NFAState(char c, int i, std::unordered_map<int, Regex::NFAState
 // build state with string transition (character class)
 Regex::NFAState::NFAState(std::string s, int i, std::unordered_map<int, Regex::NFAState*>* nfa) : ID(i), c(Regex::CharacterClass(s, false)), out1(nullptr), out2(nullptr) { (*nfa)[ID] = this; }
 Regex::NFAState::~NFAState(){}
-
-// build state
-Regex::DFAState::DFAState(int i) : accept(false), ID(i) {}
-Regex::DFAState::~DFAState(){}
