@@ -237,9 +237,13 @@ void Regex::printNFAStates(){
     std::cout << "States:" << std::endl << std::endl;
 
     for(auto i = this->nfa.begin(); i != this->nfa.end(); i++){
-        std::cout << "State " << i->first << std::endl;
+        std::cout << "State " << i->first;
         if(i->second->ID == nfaAcc)
-            std::cout << "    ACCEPT" << std::endl;
+            std::cout << " - ACCEPT" << std::endl;
+        else if(i->second->ID == nfaStart)
+            std::cout << " - START" << std::endl;
+        else
+            std::cout << std::endl;
         if(i->second->out1 != nullptr){
             std::cout << "    goes to state " << i->second->out1->ID << " on ";  
             std::string trans = "";

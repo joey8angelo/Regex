@@ -6,6 +6,9 @@ class Regex{
     Regex(std::string);
     ~Regex();
     std::string getProcessedExpression(){return this->processedReg;}
+    std::pair<int, std::string> find(std::string);
+    bool test(std::string);
+    std::vector<std::pair<int, std::string>> group(std::string);
     private:
     void printNFAStates();
     std::string preprocess();
@@ -41,7 +44,7 @@ class Regex{
         A NFA state, according to thompson's construction no state will have more than 2 outgoing edges
         and if the edge is not epsilon it will only ever have 1 outgoing edge
         the edge is a pointer to other NFA states where the character to transition on is a CharacterClass
-        Where epsilon is a boolean value in CharacterClass
+        epsilon is denoted with a boolean value in CharacterClass
     */
     struct NFAState{
         NFAState(int, std::unordered_map<int, Regex::NFAState*>*);
@@ -62,5 +65,5 @@ class Regex{
     std::vector<Regex::NFAState*> parseChar(std::string&, int&, char);
     std::vector<Regex::NFAState*> parseChar(std::string&, int&, Regex::NFAState*);
     void deleteNFA();
-    std::set<int> epsilonClosure(Regex::NFAState*);
+    std::unordered_set<int> epsilonClosure(int);
 };

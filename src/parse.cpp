@@ -127,6 +127,7 @@ std::vector<Regex::NFAState*> Regex::parse_(std::string& in, int& currPos){
                     }
                 }
                 else if(currPos+1 < in.size()){
+                    currPos++;
                     auto temp = parseChar(in, currPos, in[currPos]);
                     s=temp[0];
                     e=temp[1];
@@ -258,6 +259,10 @@ std::vector<Regex::NFAState*> Regex::parseChar(std::string& in, int& currPos, Re
             currPos+=2;
             temp = parse_(in, currPos);
         }
+        else if(currPos+1 < in.size() && in[currPos+1] == '['){
+            currPos++;
+            temp = parse_(in, currPos);
+        }
         else if(currPos+1 < in.size() && in[currPos+1] == '\\'){
             currPos++;
             if(currPos+1 < in.size()){
@@ -287,8 +292,9 @@ std::vector<Regex::NFAState*> Regex::parseChar(std::string& in, int& currPos, Re
 /*
     Given a state compute what states are reachable through epsilon transitions
 */
-std::set<int> Regex::epsilonClosure(Regex::NFAState* s){
-    std::set<int> states;
+std::unordered_set<int> Regex::epsilonClosure(int n){
+    Regex::NFAState* s = nfa[n];
+    std::unordered_set<int> states;
     std::vector<Regex::NFAState*> stack;
     stack.push_back(s);
     
