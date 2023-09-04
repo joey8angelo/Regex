@@ -116,7 +116,7 @@ std::vector<Regex::NFAState*> Regex::parse_(std::string& in, int& currPos){
                 }
                 // an escaped character is treated like a normal character
                 else if(currPos+1 < in.size() && in[currPos+1] == '\\'){
-                    currPos++;
+                    currPos+=2;
                     if(currPos < in.size()){
                         auto temp = parseChar(in, currPos, in[currPos]);
                         s=temp[0];

@@ -1,6 +1,6 @@
 # Regex
 
-A C++ implementation of a regular expression engine. This engine uses Thompson's NFA construction to build an NFA from a regular expression, it then does a BFS through the NFA over an input to determine a match. Thompsons construction guarantees no more than 2n = O(n) states for a size n regular expression, and the BFS approach allows for linear O(m) for size m input string.
+A C++ implementation of a regular expression engine. This engine uses Thompson's NFA construction to build an NFA from a regular expression, it then does a BFS through the NFA over an input to determine a match. Thompsons construction guarantees no more than 2n = O(n) states for a size n regular expression, and the BFS approach allows for linear O(m) time for size m input string.
 
 ## Usage
 - find(std::string) - returns a std::pair<int, std::string> denoting the position of the match and the string that was matched. If there is no match the pair will be (-1, ").
