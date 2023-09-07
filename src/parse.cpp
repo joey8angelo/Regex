@@ -3,12 +3,26 @@
 int id = 0;
 
 void Regex::parse(){
-    int p = 0;
+    int p;
+    if(reg.size() && reg[0] == '^')
+        p = 1;
+    else
+        p = 0;
     auto t = parse(p);
+
+    Regex::NFAState* s = new Regex::NFAState(id++, &nfa);
+    Regex::NFAState* e = new Regex::NFAState(id++, &nfa);
+
     if(t[0])
-        nfaStart = t[0]->ID;
+        s->out1 = t[0];
+    else
+        s->out1 = e;
+
     if(t[1])
-        nfaAcc = t[1]->ID;
+        t[1]->out1 = e;
+
+    nfaStart = s->ID;
+    nfaAcc = e->ID;
 
     printNFAStates();
     id=0;
@@ -234,7 +248,10 @@ std::vector<Regex::NFAState*> Regex::parseSpecial(int& currPos){
                                                             {'w', "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"},
                                                             {'d', "0123456789"}, {'D', "^0123456789"}};
     Regex::NFAState* a;
-    if(special.find(reg[currPos]) != special.end()){
+    if(reg[currPos] == '.' && currPos > 0 && reg[currPos-1] == '\\'){
+        a = new Regex::NFAState(reg[currPos], id++, &nfa);
+    }
+    else if(special.find(reg[currPos]) != special.end()){
         a = new Regex::NFAState(special[reg[currPos]], id++, &nfa);
     }
     else{
@@ -293,6 +310,7 @@ std::vector<Regex::NFAState*> Regex::parseChar(int& currPos){
 }
 
 std::vector<Regex::NFAState*> Regex::parseInterval(Regex::NFAState* a, Regex::NFAState* b, int& currPos){
+    int* tid = &id;
     int init = currPos-1;
     int l = -1;
     int r = -1;
@@ -390,25 +408,25 @@ std::vector<Regex::NFAState*> Regex::parseInterval(Regex::NFAState* a, Regex::NF
 }
 
 std::vector<Regex::NFAState*> Regex::copy(std::unordered_set<int>& ls, int s, int e){
-    int nid = id;
-    id += ls.size();
+    std::unordered_map<int,int> mp;
     for(int i : ls){
         std::string cc = nfa[i]->c.stringify();
+        mp[i] = id;
         if(!cc.size())
-            auto t = new Regex::NFAState(nid+i, &nfa);
+            auto t = new Regex::NFAState(id++, &nfa);
         else
-            auto t = new Regex::NFAState(cc, nid+i, &nfa);
+            auto t = new Regex::NFAState(cc, id++, &nfa);
     }
 
     for(int i : ls){
-        if(nfa[i]->out1 && nfa.find(nfa[i]->out1->ID + nid) != nfa.end()){
-            nfa[i+nid]->out1 = nfa[nfa[i]->out1->ID + nid];
+        if(nfa[i]->out1 && mp.find(nfa[i]->out1->ID) != mp.end()){
+            nfa[mp[i]]->out1 = nfa[mp[nfa[i]->out1->ID]];
         }
         if(nfa[i]->out2){
-            nfa[i+nid]->out2 = nfa[nfa[i]->out2->ID + nid];
+            nfa[mp[i]]->out2 = nfa[mp[nfa[i]->out2->ID]];
         }
     }
-    return {nfa[s+nid], nfa[e+nid]};
+    return {nfa[mp[s]], nfa[mp[e]]};
 }
 
 std::unordered_set<int> Regex::makeList(Regex::NFAState* s, Regex::NFAState* e){
@@ -508,28 +526,4 @@ std::vector<Regex::NFAState*> Regex::doPipe(Regex::NFAState* a, Regex::NFAState*
     temp[1]->out1 = d;
 
     return {c,d};
-}
-
-/*
-    Given a state compute what states are reachable through epsilon transitions
-*/
-std::unordered_set<int> Regex::epsilonClosure(int n){
-    Regex::NFAState* s = nfa[n];
-    std::unordered_set<int> states;
-    std::vector<Regex::NFAState*> stack;
-    stack.push_back(s);
-    
-    while(stack.size()){
-        Regex::NFAState* top = stack[stack.size()-1];
-        stack.pop_back();
-        if(top->c.epsilon && top->out1 != nullptr && states.find(top->out1->ID) == states.end()){
-            states.insert(top->out1->ID);
-            stack.push_back(top->out1);
-        }
-        if(top->c.epsilon && top->out2 != nullptr && states.find(top->out2->ID) == states.end()){
-            states.insert(top->out2->ID);
-            stack.push_back(top->out2);
-        }
-    }
-    return states;
 }

@@ -1,9 +1,8 @@
 #include "../headers/Regex.h"
 
 /*
-    Remove outer brackets and parse the inside
     If the first character is a ^ then the class is negated
-    All characters are allowed without '\\' except for [ and ]
+    Inserts all the characters in the given string to the set
 */
 Regex::CharacterClass::CharacterClass(std::string ch, bool e) : negated(false), epsilon(e){
     if(epsilon)

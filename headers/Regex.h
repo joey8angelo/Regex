@@ -68,4 +68,5 @@ class Regex{
     std::unordered_set<int> epsilonClosure(int);
     std::unordered_set<int> makeList(Regex::NFAState*, Regex::NFAState*);
     std::vector<Regex::NFAState*> copy(std::unordered_set<int>&, int, int);
+    std::pair<int, std::string> Rfind(std::string);
 };
