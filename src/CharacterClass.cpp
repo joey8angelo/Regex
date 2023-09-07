@@ -8,26 +8,11 @@
 Regex::CharacterClass::CharacterClass(std::string ch, bool e) : negated(false), epsilon(e){
     if(epsilon)
         return;
-    bool hasBrackets = false;
-    int p = 0;
-    if(ch.size() && ch[0] == '['){
-        hasBrackets = true;
-        p++;
-    }
-    if(ch.size() > 1+p && ch[0+p] == '^'){
+    if(ch.size() && ch[0] == '^')
         negated = true;
-        p++;
-    }
-    for(int i = p; i < ch.size()-(hasBrackets ? 1 : 0); i++){
-        if(ch[i] == '\\'){
-            if(i+1 != ch.size())
-                characters.insert(ch[i+1]);
-            else
-                throw std::runtime_error("Escape character not found");
-            i++;
-        }
-        else
-            characters.insert(ch[i]);
+
+    for(int i = (negated ? 1 : 0); i < ch.size(); i++){
+        characters.insert(ch[i]);
     }
 }
 Regex::CharacterClass::~CharacterClass() {}
@@ -39,4 +24,12 @@ Regex::CharacterClass::~CharacterClass() {}
 bool Regex::CharacterClass::operator==(char c){
     bool t = this->characters.find(c) != this->characters.end();
     return negated ? !t : t; 
+}
+
+std::string Regex::CharacterClass::stringify(){
+    std::string r = "";
+    for(char ch : characters){
+        r += ch;
+    }
+    return r;
 }
