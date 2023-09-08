@@ -3,9 +3,40 @@
 A C++ implementation of a regular expression engine. This engine uses Thompson's NFA construction to build an NFA from a regular expression, it then does a BFS through the NFA over an input to determine a match. Thompsons construction guarantees no more than 2n = O(n) states for a size n regular expression, and the BFS approach allows for linear O(m) time for size m input string.
 
 ## Usage
-- find(std::string) - returns a std::pair<int, std::string> denoting the position of the match and the string that was matched. If there is no match the pair will be (-1, ").
-- test(std::string) - returns a boolean value if there is any matches in the string.
-- group(std::string) - returns a std::vector<std::pair<int, std::string>>, the position and substring of each match from the left of the input string. If there are no matches then the vector will be empty.
+Supply the regular expression through the Regex constructor.
+
+```c++
+Regex r("hello (friend)|(world)!");
+```
+
+- Regex::find(std::string) - returns a std::pair<int, std::string> denoting the position of the match and the string that was matched. If there is no match the pair will be (-1, "").
+
+```c++
+r.find("hello friend!");
+    // returns (0, "hello friend!")
+r.find("goodbye... actually hello world! is what I meant");
+    // returns (20, "hello world!")
+r.find("goodbye world, for real");
+    // returns (-1, "")
+```
+
+- Regex::test(std::string) - returns a boolean value if there is any matches in the string. The worst case for this function is much faster than find.
+
+```c++
+r.test("hello world!");
+    // returns true
+r.test("abc123 hello world! 123abc");
+    // returns true
+r.test("hello 123 world!");
+    // returns false
+```
+
+- Regex::group(std::string) - returns a std::vector<std::pair<int, std::string>>, the position and substring of each match from the left of the input string. If there are no matches then the vector will be empty.
+
+```c++
+r.group("hello friend! hello world! 123 hello world!");
+    // returns {(0, "hello friend!), (14, "hello world!), (31, "hello world!")}
+```
 
 ## Special Symbols
 
@@ -40,12 +71,11 @@ The | operator has more than one operand. The | operates on the character/group/
 ## Character Classes
 A character class is defined with []. Any symbol inside is treated literally except for some special symbols, '-', '[', ']', which must be escaped: \\\\[, \\\\], \\\\-.
 
-Character classes cannot be nested, which means no escaped special characters are allowed inside.
+Character classes cannot be nested, which means that escaped special characters will be treated as normal characters: [\\w] -> [w].
 
 The range symbol '-' inserts all characters in between the two operands, [0-5] -> [012345]. The left hand side must be smaller than the right hand side.
 
-Special ranges are allowed, [\x21-\x2C] -> [!"#$%&'()\*+,-./].
-As seen from this example the ? is used, which does not need to be escaped. Bad characters such as \ and [ are automatically escaped if they show up in the range.
+Special ranges are allowed, [\x21-\x2C] -> [!"#$%&'()\*+,-./], all characters seen in the range are treated literally.
 
 ## Special Escape Characters
 Escape characters have special meanings within the regular expression. Any built in escape characters can also be used normally: \n,\r...
