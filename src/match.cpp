@@ -61,8 +61,8 @@ std::pair<int, std::string> Regex::find(std::string str){
 
 /*
     Returns true if any sequence of characters leads to an accept state
-    Augments the nfa with .* at the start to nondeterministically find the accept state
-    if its not necessary to match from the start of the string
+    Augments the nfa with .* at the start/end to nondeterministically find the accept state
+    if its not necessary to match from the start/end of the string
 */
 bool Regex::test(std::string str){
     int augStart;
@@ -75,11 +75,11 @@ bool Regex::test(std::string str){
         Regex::NFAState* a = new Regex::NFAState("^\n\r", -2, &nfa);
         Regex::NFAState* b = new Regex::NFAState(-3, &nfa);
 
-        a->out1 = augS;
-        a->out2 = b;
-        augS->out1 = b;
-        b->out2 = augS;
+        augS->out1 = a;
+        augS->out2 = b;
+        a->out1 = b;
         b->out1 = nfa[nfaStart];
+        b->out2 = augS;
         augStart = -1;
     }
 
@@ -106,7 +106,7 @@ bool Regex::test(std::string str){
     for(int v : temp){current.insert(v);}
         
     for(int j = 0; j < str.size(); j++){
-        if(current.find(augAcc) != current.end()){
+        if(current.find(augAcc) != current.end() && !matchEnd){
             if(augStart != nfaStart){
                 delete nfa[-1];
                 nfa.erase(-1);
@@ -126,7 +126,7 @@ bool Regex::test(std::string str){
             }
         }
         // if next set contains the accept state and the string is completely used
-        if(next.find(augAcc) != next.end() && j == str.size()-1){
+        if(next.find(augAcc) != next.end() && (j == str.size()-1 || !matchEnd)){
             if(augStart != nfaStart){
                 delete nfa[-1];
                 nfa.erase(-1);

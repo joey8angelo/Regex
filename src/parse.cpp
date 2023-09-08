@@ -56,7 +56,7 @@ std::vector<Regex::NFAState*> Regex::parse(int& currPos){
         else if(reg[currPos] == ']')
             throw std::runtime_error("Unbalanced square brackets at position " + std::to_string(currPos));
         else if(reg[currPos] == '*' || reg[currPos] == '+' || reg[currPos] == '?' || reg[currPos] == '|')
-            throw std::runtime_error("Invalid use of " + std::string(1, reg[currPos]) + "operator at position " + std::to_string(currPos));
+            throw std::runtime_error("Invalid use of " + std::string(1, reg[currPos]) + " operator at position " + std::to_string(currPos));
         else{
             temp = parseChar(currPos);
         }
@@ -128,7 +128,7 @@ std::vector<Regex::NFAState*> Regex::parseGroup(int& currPos){
         }
     }
 
-    if(currPos == reg.size()-1 && reg[currPos] != ')')
+    if((currPos == reg.size()-1 && reg[currPos] != ')') || currPos == reg.size())
         throw std::runtime_error("Unbalanced parenthesis");
 
     temp.clear();
@@ -213,7 +213,7 @@ std::vector<Regex::NFAState*> Regex::parseCharClass(int& currPos){
         }
     }
 
-    if(currPos == reg.size()-1 && reg[currPos] != ']')
+    if((currPos == reg.size()-1 && reg[currPos] != ']') || currPos == reg.size())
         throw std::runtime_error("Unbalanced square brackets");
 
     Regex::NFAState* a = new Regex::NFAState(t, id++, &nfa);
@@ -319,7 +319,9 @@ std::vector<Regex::NFAState*> Regex::parseInterval(Regex::NFAState* a, Regex::NF
     for(;currPos < reg.size(); currPos++){
         if(reg[currPos] == '}')
             break;
-        if(!std::isdigit(this->reg[currPos]) && !(this->reg[currPos] == ',' || this->reg[currPos] == ' '))
+        if(reg[currPos] == ' ')
+            throw std::runtime_error("Do not use spaces in interval operator at position " + std::to_string(currPos));
+        if(!std::isdigit(reg[currPos]) && !(reg[currPos] == ','))
             throw std::runtime_error("Invalid expression in interval operator at position " + std::to_string(init));
         if(reg[currPos] == ','){
             l = std::stoi(current);
@@ -327,11 +329,11 @@ std::vector<Regex::NFAState*> Regex::parseInterval(Regex::NFAState* a, Regex::NF
             commaFlag = true;
         }
         else{
-            current += this->reg[currPos];
+            current += reg[currPos];
         }
     }
 
-    if(currPos == reg.size()-1 && reg[currPos] != '}')
+    if(currPos == reg.size()-1 && reg[currPos] != '}' || currPos == reg.size())
         throw std::runtime_error("No closing bracket for opening bracket at position " + std::to_string(init));
 
     if(current.size()){

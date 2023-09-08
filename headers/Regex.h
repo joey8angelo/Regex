@@ -5,16 +5,13 @@ class Regex{
     public:
     Regex(std::string);
     ~Regex();
-    std::string getProcessedExpression(){return this->processedReg;}
     std::pair<int, std::string> find(std::string);
     bool test(std::string);
     std::vector<std::pair<int, std::string>> group(std::string);
     private:
     void printNFAStates();
     std::string preprocess();
-    std::string findPrevChar(std::string);
     std::string reg;
-    std::string processedReg;
     bool matchStart;
     bool matchEnd;
     bool reversed;

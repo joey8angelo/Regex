@@ -1,13 +1,15 @@
 #include "../headers/Regex.h"
 
-Regex::Regex(std::string in) : reg(in), matchStart(false), matchEnd(false){
+Regex::Regex(std::string in) : reg(in), matchStart(false), matchEnd(false), reversed(false){
     if(in.size() && in[0] == '^')
         matchStart = true;
     if(in.size() && in[in.size()-1] == '$' && in.size() > 1 && in[in.size()-2] != '\\'){
         matchEnd = true;
         reg.pop_back();
     }
-
+    // if matching from the end and not the start, invert the regular expression
+    // inverting simply means when concatenating groups/characters append them to
+    // the front of the current expression
     if(!matchStart && matchEnd){
         reversed = true;
         matchEnd = false;
