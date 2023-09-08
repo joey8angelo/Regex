@@ -5,12 +5,11 @@ class Regex{
     public:
     Regex(std::string);
     ~Regex();
-    std::pair<int, std::string> find(std::string);
-    bool test(std::string);
-    std::vector<std::pair<int, std::string>> group(std::string);
+    std::pair<int, std::string> find(const std::string&) const;
+    bool test(const std::string&);
+    std::vector<std::pair<int, std::string>> group(const std::string&) const;
     private:
     void printNFAStates();
-    std::string preprocess();
     std::string reg;
     bool matchStart;
     bool matchEnd;
@@ -62,7 +61,7 @@ class Regex{
     std::vector<Regex::NFAState*> doPlus(Regex::NFAState*, Regex::NFAState*);
     std::vector<Regex::NFAState*> doPipe(Regex::NFAState*, Regex::NFAState*, int&);
     void deleteNFA();
-    std::unordered_set<int> epsilonClosure(int);
+    std::unordered_set<int> epsilonClosure(int) const;
     std::unordered_set<int> makeList(Regex::NFAState*, Regex::NFAState*);
     std::vector<Regex::NFAState*> copy(std::unordered_set<int>&, int, int);
 };

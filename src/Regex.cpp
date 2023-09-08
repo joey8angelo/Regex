@@ -105,8 +105,8 @@ void Regex::printNFAStates(){
 /*
     Given a state compute what states are reachable through epsilon transitions
 */
-std::unordered_set<int> Regex::epsilonClosure(int n){
-    Regex::NFAState* s = nfa[n];
+std::unordered_set<int> Regex::epsilonClosure(int n) const{
+    Regex::NFAState* s = nfa.at(n);
     std::unordered_set<int> states;
     std::vector<Regex::NFAState*> stack;
     stack.push_back(s);

@@ -5,7 +5,7 @@
     If we are searching the back of the string because of a $
     Then j becomes str.size()-j-1 to match from the end
 */
-std::pair<int, std::string> Regex::find(std::string str){
+std::pair<int, std::string> Regex::find(const std::string& str) const{
     // if the string must be matched from the start only iterate one time
     int cmp = matchStart ? 1 : str.size();
     for(int i = 0; i < cmp; i++){
@@ -21,9 +21,9 @@ std::pair<int, std::string> Regex::find(std::string str){
             if(current.find(nfaAcc) != current.end())
                 lastAcc = reversed ? str.size()-j : j;
             for(int p : current){
-                if(nfa[p]->c == str[reversed ? str.size()-j-1 : j] && nfa[p]->out1){
-                    next.insert(nfa[p]->out1->ID);
-                    temp = epsilonClosure(nfa[p]->out1->ID);
+                if(nfa.at(p)->c == str[reversed ? str.size()-j-1 : j] && nfa.at(p)->out1){
+                    next.insert(nfa.at(p)->out1->ID);
+                    temp = epsilonClosure(nfa.at(p)->out1->ID);
                     for(int v : temp){next.insert(v);}
                 }
             }
@@ -64,7 +64,7 @@ std::pair<int, std::string> Regex::find(std::string str){
     Augments the nfa with .* at the start/end to nondeterministically find the accept state
     if its not necessary to match from the start/end of the string
 */
-bool Regex::test(std::string str){
+bool Regex::test(const std::string& str){
     int augStart;
     int augAcc;
     if(matchStart){
@@ -119,9 +119,9 @@ bool Regex::test(std::string str){
             return true;
         }
         for(int p : current){
-            if(nfa[p]->c == str[reversed ? str.size()-j-1 : j] && nfa[p]->out1){
-                next.insert(nfa[p]->out1->ID);
-                temp = epsilonClosure(nfa[p]->out1->ID);
+            if(nfa.at(p)->c == str[reversed ? str.size()-j-1 : j] && nfa.at(p)->out1){
+                next.insert(nfa.at(p)->out1->ID);
+                temp = epsilonClosure(nfa.at(p)->out1->ID);
                 for(int v : temp){next.insert(v);}
             }
         }
@@ -179,7 +179,7 @@ bool Regex::test(std::string str){
     Returns a list of positions and strings that the pattern matches from the left
     The same algorithm as find, but instead of returning matches puts them in a list and moves on
 */
-std::vector<std::pair<int, std::string>> Regex::group(std::string str){
+std::vector<std::pair<int, std::string>> Regex::group(const std::string& str) const{
     std::vector<std::pair<int, std::string>> res;
     int cmp = matchStart ? 1 : str.size();
     for(int i = 0; i < cmp; i++){
@@ -194,9 +194,9 @@ std::vector<std::pair<int, std::string>> Regex::group(std::string str){
             if(current.find(nfaAcc) != current.end())
                 lastAcc = reversed ? str.size()-j : j;
             for(int p : current){
-                if(nfa[p]->c == str[reversed ? str.size()-j-1 : j] && nfa[p]->out1){
-                    next.insert(nfa[p]->out1->ID);
-                    temp = epsilonClosure(nfa[p]->out1->ID);
+                if(nfa.at(p)->c == str[reversed ? str.size()-j-1 : j] && nfa.at(p)->out1){
+                    next.insert(nfa.at(p)->out1->ID);
+                    temp = epsilonClosure(nfa.at(p)->out1->ID);
                     for(int v : temp){next.insert(v);}
                 }
             }
