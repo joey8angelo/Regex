@@ -24,7 +24,7 @@ void Regex::parse(){
     nfaStart = s->ID;
     nfaAcc = e->ID;
 
-    printNFAStates();
+    // printNFAStates();
     id=0;
 }
 

@@ -1,6 +1,6 @@
 #include "../headers/Regex.h"
 
-Regex::Regex(std::string in) : reg(in), matchStart(false), matchEnd(false), reversed(false){
+Regex::Regex(std::string in) : reg(in), matchStart(false), matchEnd(false), reversed(false), dfaStart(nullptr), CACHELIMIT(5000){
     if(in.size() && in[0] == '^')
         matchStart = true;
     if(in.size() && in[in.size()-1] == '$' && in.size() > 1 && in[in.size()-2] != '\\'){
@@ -16,20 +16,12 @@ Regex::Regex(std::string in) : reg(in), matchStart(false), matchEnd(false), reve
         matchStart = true;
     }
     parse();
+    reject = new Regex::DFAState(std::set<int>({-1}));
 }
 
 Regex::~Regex(){
     deleteNFA();
-}
-
-/*
-    Deletes nfa
-*/
-void Regex::deleteNFA(){
-    for(auto i = nfa.begin(); i != nfa.end(); i++){
-        delete i->second;
-    }
-    nfa.clear();
+    deleteDFA();
 }
 
 /*

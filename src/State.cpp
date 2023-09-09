@@ -5,4 +5,35 @@ Regex::NFAState::NFAState(int i, std::unordered_map<int, Regex::NFAState*>* nfa)
 Regex::NFAState::NFAState(char c, int i, std::unordered_map<int, Regex::NFAState*>* nfa) : ID(i), c(Regex::CharacterClass(std::string(1,c), false)), out1(nullptr), out2(nullptr) { (*nfa)[ID] = this; }
 // build state with string transition (character class)
 Regex::NFAState::NFAState(std::string s, int i, std::unordered_map<int, Regex::NFAState*>* nfa) : ID(i), c(Regex::CharacterClass(s, false)), out1(nullptr), out2(nullptr) { (*nfa)[ID] = this; }
+
+/*
+    Deletes nfa
+*/
+void Regex::deleteNFA(){
+    for(auto i = nfa.begin(); i != nfa.end(); i++){
+        delete i->second;
+    }
+    nfa.clear();
+}
+
 Regex::NFAState::~NFAState(){}
+
+Regex::DFAState::DFAState(std::set<int> s) : accept(false), ls(s){}
+Regex::DFAState::DFAState(std::set<int> s, bool a) : accept(a), ls(s){}
+
+Regex::DFAState* Regex::DFAState::next(char c){
+    if(out.find(c) == out.end())
+        return nullptr;
+    return out[c];
+}
+/*
+    Deletes dfa
+*/
+void Regex::deleteDFA(){
+    for(auto i = dfa.begin(); i != dfa.end(); i++){
+        delete i->second;
+    }
+    dfa.clear();
+}
+
+Regex::DFAState::~DFAState(){}
