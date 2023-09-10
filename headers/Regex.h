@@ -48,18 +48,17 @@ class Regex{
         Regex::NFAState* out2;
     };
     struct DFAState{
-        DFAState(std::set<int>);
-        DFAState(std::set<int>, bool);
+        DFAState(std::set<int>*);
+        DFAState(std::set<int>*, bool);
         ~DFAState();
-        Regex::DFAState* next(char);
         std::unordered_map<char, Regex::DFAState*> out;
-        std::set<int> ls;
+        std::set<int>* ls;
         bool accept;
     };
     struct setHash{
-        std::size_t operator()(const std::set<int>& s) const{
-            std::size_t seed = s.size();
-            for(auto& i : s) {
+        std::size_t operator()(const std::set<int>* s) const{
+            std::size_t seed = s->size();
+            for(auto& i : *s) {
                 seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
             }
             return seed;
@@ -68,7 +67,7 @@ class Regex{
     int nfaStart;
     int nfaAcc;
     std::unordered_map<int, Regex::NFAState*> nfa;
-    std::unordered_map<std::set<int>, Regex::DFAState*, Regex::setHash> dfa;
+    std::unordered_map<std::set<int>*, Regex::DFAState*, Regex::setHash> dfa;
     Regex::DFAState* reject;
     Regex::DFAState* dfaStart;
     void parse();
@@ -83,8 +82,10 @@ class Regex{
     std::vector<Regex::NFAState*> doPlus(Regex::NFAState*, Regex::NFAState*);
     std::vector<Regex::NFAState*> doPipe(Regex::NFAState*, Regex::NFAState*, int&);
     void deleteNFA();
-    void deleteDFA();
-    std::unordered_set<int> epsilonClosure(int) const;
+    void deleteDFA(Regex::DFAState* st = nullptr);
+    void epsilonClosure(int, std::set<int>*) const;
     std::unordered_set<int> makeList(Regex::NFAState*, Regex::NFAState*);
     std::vector<Regex::NFAState*> copy(std::unordered_set<int>&, int, int);
+    Regex::DFAState* nextDFA(char, Regex::DFAState*);
+    void buildDFAStart();
 };
