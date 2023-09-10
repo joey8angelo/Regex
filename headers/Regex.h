@@ -7,7 +7,7 @@ class Regex{
     ~Regex();
     std::pair<int, std::string> find(const std::string&);
     bool test(const std::string&);
-    std::vector<std::pair<int, std::string>> group(const std::string&) const;
+    std::vector<std::pair<int, std::string>> group(const std::string&);
     private:
     const int CACHELIMIT;
     void printNFAStates();

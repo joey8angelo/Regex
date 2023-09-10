@@ -27,13 +27,19 @@ Regex::DFAState* Regex::DFAState::next(char c){
     return out[c];
 }
 /*
-    Deletes dfa
+    Deletes dfa - does not delete dfaStart if there is one
 */
 void Regex::deleteDFA(){
+    if(dfaStart){
+        dfa.erase(dfaStart->ls);
+        dfaStart->out.clear();
+    }
     for(auto i = dfa.begin(); i != dfa.end(); i++){
         delete i->second;
     }
     dfa.clear();
+    if(dfaStart)
+        dfa[dfaStart->ls] = dfaStart;
 }
 
 Regex::DFAState::~DFAState(){}

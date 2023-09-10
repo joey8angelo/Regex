@@ -13,7 +13,6 @@ std::pair<int, std::string> Regex::find(const std::string& str){
     if(!dfaStart){
         std::set<int> c;
         c.insert(nfaStart);
-        auto t = epsilonClosure(nfaStart);
         std::unordered_set<int> temp = epsilonClosure(nfaStart);
         for(int v : temp){c.insert(v);}
         dfaStart = new DFAState(c, c.find(nfaAcc) != c.end());
@@ -60,7 +59,6 @@ std::pair<int, std::string> Regex::find(const std::string& str){
                 else if(dfa.find(t) == dfa.end()){
                     if(dfa.size() == CACHELIMIT){
                         deleteDFA();
-                        dfa[std::set<int>({-1})] = dfaStart;
                     }
                     dfa[t] = new Regex::DFAState(t, t.find(nfaAcc) != t.end());
                     currentState->out[str[reversed ? str.size()-j-1 : j]] = dfa[t];
@@ -214,28 +212,72 @@ bool Regex::test(const std::string& str){
     Returns a list of positions and strings that the pattern matches from the left
     The same algorithm as find, but instead of returning matches puts them in a list and moves on
 */
-std::vector<std::pair<int, std::string>> Regex::group(const std::string& str) const{
+std::vector<std::pair<int, std::string>> Regex::group(const std::string& str){
+    Regex::DFAState* currentState;
     std::vector<std::pair<int, std::string>> res;
+
+    // make the initial DFA state if it does not exist
+    if(!dfaStart){
+        std::set<int> c;
+        c.insert(nfaStart);
+        std::unordered_set<int> temp = epsilonClosure(nfaStart);
+        for(int v : temp){c.insert(v);}
+        dfaStart = new DFAState(c, c.find(nfaAcc) != c.end());
+        if(dfa.size() == CACHELIMIT){
+            deleteDFA();
+        }
+        dfa[c] = dfaStart;
+    }
+
+    // if the string is empty see if we can match on epsilon
+    if(!str.size()){
+        if(dfaStart->accept)
+            res.push_back(std::make_pair(0, ""));
+        return res;
+    }
+
+    // iterate only once through the string if matchStart
     int cmp = matchStart ? 1 : str.size();
     for(int i = 0; i < cmp; i++){
-        std::unordered_set<int> current;
-        std::unordered_set<int> next;
-        current.insert(nfaStart);
-        std::unordered_set<int> temp = epsilonClosure(nfaStart);
-        for(int v : temp){current.insert(v);}
+        currentState = dfaStart;
         int lastAcc = -1;
-        
+
         for(int j = i; j < str.size(); j++){
-            if(current.find(nfaAcc) != current.end())
+            if(currentState->accept)
                 lastAcc = reversed ? str.size()-j : j;
-            for(int p : current){
-                if(nfa.at(p)->c == str[reversed ? str.size()-j-1 : j] && nfa.at(p)->out1){
-                    next.insert(nfa.at(p)->out1->ID);
-                    temp = epsilonClosure(nfa.at(p)->out1->ID);
-                    for(int v : temp){next.insert(v);}
+
+            // check if currentState[str[pos]] does not exist
+            if(currentState->next(str[reversed ? str.size()-j-1 : j]) == nullptr){
+                // compute the next set of nfa states from the currentStates set
+                std::set<int> t;
+                for(auto p : currentState->ls){
+                    if(nfa[p]->c == str[reversed ? str.size()-j-1 : j] && nfa[p]->out1){
+                        t.insert(nfa[p]->out1->ID);
+                        std::unordered_set<int> temp = epsilonClosure(nfa[p]->out1->ID);
+                        for(int v : temp){t.insert(v);}
+                    }
+                }
+                // if the next set is empty this state transitions to reject on that character
+                if(!t.size()){
+                    currentState->out[str[reversed ? str.size()-j-1 : j]] = reject;
+                }
+                // if the next set does not exist as a dfa state create one and transition to it
+                else if(dfa.find(t) == dfa.end()){
+                    if(dfa.size() == CACHELIMIT){
+                        deleteDFA();
+                    }
+                    dfa[t] = new Regex::DFAState(t, t.find(nfaAcc) != t.end());
+                    currentState->out[str[reversed ? str.size()-j-1 : j]] = dfa[t];
+                }
+                // transition to the dfa state corresponding to the set of nfa states
+                else{
+                    currentState->out[str[reversed ? str.size()-j-1 : j]] = dfa[t];
                 }
             }
-            if(next.find(nfaAcc) != next.end() && j == str.size()-1){
+            currentState = currentState->next(str[reversed ? str.size()-j-1 : j]);
+
+            // if next set contains the accept state and the string is completely used
+            if(currentState->accept && j == str.size()-1){
                 if(reversed)
                     res.push_back(std::make_pair(str.size()-j-1, str.substr(str.size()-j-1, str.size()-(str.size()-j-1))));
                 else
@@ -245,7 +287,9 @@ std::vector<std::pair<int, std::string>> Regex::group(const std::string& str) co
                 i=j-1;
                 break;
             }
-            else if(!next.size() && lastAcc != -1 && !matchEnd){
+            // if the currentState is in reject no possible paths can be taken
+            // if an accept state was previously seen return from that position
+            if(currentState == reject && lastAcc != -1 && !matchEnd){
                 if(reversed)
                     res.push_back(std::make_pair(lastAcc, str.substr(lastAcc, str.size()-lastAcc)));
                 else
@@ -255,18 +299,11 @@ std::vector<std::pair<int, std::string>> Regex::group(const std::string& str) co
                 i=j-1;
                 break;
             }
-            else if(!next.size()){
+            // continue searching the string for a match if currentState is reject
+            if(currentState == reject){
                 break;
             }
-            current = next;
-            next.clear();
         }
     }
-    std::unordered_set<int> t;
-    t.insert(nfaStart);
-    std::unordered_set<int> t1 = epsilonClosure(nfaStart);
-    for(int v : t1){t.insert(v);}
-    if(t.find(nfaAcc) != t.end())
-        res.push_back(std::make_pair(0, ""));
     return res;
 }
