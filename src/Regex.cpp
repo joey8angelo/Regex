@@ -1,6 +1,6 @@
 #include "../headers/Regex.h"
 
-Regex::Regex(std::string in) : reg(in), matchStart(false), matchEnd(false), reversed(false){
+Regex::Regex(std::string in) : reg(in), matchStart(false), matchEnd(false), reversed(false), dfaStart(nullptr), CACHELIMIT(200){
     if(in.size() && in[0] == '^')
         matchStart = true;
     if(in.size() && in[in.size()-1] == '$' && in.size() > 1 && in[in.size()-2] != '\\'){
@@ -16,20 +16,14 @@ Regex::Regex(std::string in) : reg(in), matchStart(false), matchEnd(false), reve
         matchStart = true;
     }
     parse();
+    reject = new Regex::DFAState(new std::set<int>({-1}));
 }
 
 Regex::~Regex(){
     deleteNFA();
-}
-
-/*
-    Deletes nfa
-*/
-void Regex::deleteNFA(){
-    for(auto i = nfa.begin(); i != nfa.end(); i++){
-        delete i->second;
-    }
-    nfa.clear();
+    deleteDFA();
+    if(reject)
+        delete reject;
 }
 
 /*
@@ -103,25 +97,23 @@ void Regex::printNFAStates(){
 }
 
 /*
-    Given a state compute what states are reachable through epsilon transitions
+    Given a state and a set insert the states that can be reached through epsilon into the set
 */
-std::unordered_set<int> Regex::epsilonClosure(int n) const{
+void Regex::epsilonClosure(int n, std::set<int>* states) const{
     Regex::NFAState* s = nfa.at(n);
-    std::unordered_set<int> states;
     std::vector<Regex::NFAState*> stack;
     stack.push_back(s);
     
     while(stack.size()){
         Regex::NFAState* top = stack[stack.size()-1];
         stack.pop_back();
-        if(top->c.epsilon && top->out1 != nullptr && states.find(top->out1->ID) == states.end()){
-            states.insert(top->out1->ID);
+        if(top->c.epsilon && top->out1 != nullptr && states->find(top->out1->ID) == states->end()){
+            states->insert(top->out1->ID);
             stack.push_back(top->out1);
         }
-        if(top->c.epsilon && top->out2 != nullptr && states.find(top->out2->ID) == states.end()){
-            states.insert(top->out2->ID);
+        if(top->c.epsilon && top->out2 != nullptr && states->find(top->out2->ID) == states->end()){
+            states->insert(top->out2->ID);
             stack.push_back(top->out2);
         }
     }
-    return states;
 }
