@@ -5,12 +5,12 @@ class Regex{
     public:
     Regex(std::string);
     ~Regex();
-    std::pair<int, std::string> find(std::string);
-    bool test(std::string);
-    std::vector<std::pair<int, std::string>> group(std::string);
+    std::pair<int, std::string> find(const std::string&);
+    bool test(const std::string&);
+    std::vector<std::pair<int, std::string>> group(const std::string&);
     private:
+    const int CACHELIMIT;
     void printNFAStates();
-    std::string preprocess();
     std::string reg;
     bool matchStart;
     bool matchEnd;
@@ -47,9 +47,29 @@ class Regex{
         Regex::NFAState* out1;
         Regex::NFAState* out2;
     };
+    struct DFAState{
+        DFAState(std::set<int>*);
+        DFAState(std::set<int>*, bool);
+        ~DFAState();
+        std::unordered_map<char, Regex::DFAState*> out;
+        std::set<int>* ls;
+        bool accept;
+    };
+    struct setHash{
+        std::size_t operator()(const std::set<int>* s) const{
+            std::size_t seed = s->size();
+            for(auto& i : *s) {
+                seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            }
+            return seed;
+        }
+    };
     int nfaStart;
     int nfaAcc;
     std::unordered_map<int, Regex::NFAState*> nfa;
+    std::unordered_map<std::set<int>*, Regex::DFAState*, Regex::setHash> dfa;
+    Regex::DFAState* reject;
+    Regex::DFAState* dfaStart;
     void parse();
     std::vector<Regex::NFAState*> parse(int&);
     std::vector<Regex::NFAState*> parseGroup(int&);
@@ -62,7 +82,10 @@ class Regex{
     std::vector<Regex::NFAState*> doPlus(Regex::NFAState*, Regex::NFAState*);
     std::vector<Regex::NFAState*> doPipe(Regex::NFAState*, Regex::NFAState*, int&);
     void deleteNFA();
-    std::unordered_set<int> epsilonClosure(int);
+    void deleteDFA(Regex::DFAState* st = nullptr);
+    void epsilonClosure(int, std::set<int>*) const;
     std::unordered_set<int> makeList(Regex::NFAState*, Regex::NFAState*);
     std::vector<Regex::NFAState*> copy(std::unordered_set<int>&, int, int);
+    Regex::DFAState* nextDFA(char, Regex::DFAState*);
+    void buildDFAStart();
 };

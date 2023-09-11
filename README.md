@@ -1,6 +1,6 @@
 # Regex
 
-A C++ implementation of a regular expression engine. This engine uses Thompson's NFA construction to build an NFA from a regular expression, it then does a BFS through the NFA over an input to determine a match. Thompsons construction guarantees no more than 2n = O(n) states for a size n regular expression, and the BFS approach allows for linear O(m) time for size m input string.
+A C++ implementation of a regular expression engine. This engine uses Thompson's NFA construction to build an NFA from a regular expression, it then does a BFS through the NFA over an input to determine a match. Thompsons construction guarantees no more than 2n = O(n) states for a size n regular expression, and matching a full string against the NFA is O(m) time where m is the size of the string.
 
 ## Usage
 Supply the regular expression through the Regex constructor.
@@ -65,8 +65,8 @@ Unary operators only have one operand on the left hand side. Any single characte
 	+ {a,} - A single digit with a comma means repeat the operand a times followed by the operand zero or more times
 	+ {a,b} - Two comma separated digits means repeat the operand a-b times
 
-### Pipe Operator
-The | operator has more than one operand. The | operates on the character/group/character class on its right hand side and its left hand side. For example, (abc|def|ghi) is equivalent to ab(c|d)e(f|g)hi. To write the previous example correctly would be (abc)|(def)|(ghi). Chained pipes parse recursively, so this examples NFA would more closely resemble (abc)|((def)|(ghi)). 
+### Alternation Operator
+The | operator has more than one operand. The | operates on the character/group/character class on its right hand side and its left hand side. For example, (abc|def|ghi) is equivalent to ab(c|d)e(f|g)hi. To write the previous example correctly would be (abc)|(def)|(ghi). Chained alternations parse recursively, so this examples NFA would more closely resemble (abc)|((def)|(ghi)). 
 
 ## Character Classes
 A character class is defined with []. Any symbol inside is treated literally except for some special symbols, '-', '[', ']', which must be escaped: \\\\[, \\\\], \\\\-.
