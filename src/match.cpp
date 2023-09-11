@@ -59,116 +59,46 @@ std::pair<int, std::string> Regex::find(const std::string& str){
     Augments the nfa with .* at the start/end to nondeterministically find the accept state
     if its not necessary to match from the start/end of the string
 */
-// bool Regex::test(const std::string& str){
-//     int augStart;
-//     int augAcc;
-//     if(matchStart){
-//         augStart = nfaStart;
-//     }
-//     else{
-//         Regex::NFAState* augS = new Regex::NFAState(-1, &nfa);
-//         Regex::NFAState* a = new Regex::NFAState("^\n\r", -2, &nfa);
-//         Regex::NFAState* b = new Regex::NFAState(-3, &nfa);
+bool Regex::test(const std::string& str){
+    Regex::DFAState* currentState;
 
-//         augS->out1 = a;
-//         augS->out2 = b;
-//         a->out1 = b;
-//         b->out1 = nfa[nfaStart];
-//         b->out2 = augS;
-//         augStart = -1;
-//     }
+    buildDFAStart();
 
-//     if(matchEnd){
-//         augAcc = nfaAcc;
-//     }
-//     else{
-//         Regex::NFAState* a = new Regex::NFAState(-4, &nfa);
-//         Regex::NFAState* b = new Regex::NFAState("^\n\r", -5, &nfa);
-//         Regex::NFAState* augA = new Regex::NFAState(-6, &nfa);
+    // if the string is empty see if we can match on epsilon
+    if(!str.size()){
+        if(dfaStart->accept)
+            true;
+        else
+            return false;
+    }
 
-//         nfa[nfaAcc]->out1 = a;
-//         a->out1 = b;
-//         a->out2 = augA;
-//         b->out1 = augA;
-//         augA->out2 = b;
-//         augAcc = -6;
-//     }
-//     // step over the NFA, keep a set of all the states currently in, and compute the next step
-//     std::unordered_set<int> current;
-//     std::unordered_set<int> next;
-//     current.insert(augStart);
-//     std::unordered_set<int> temp = epsilonClosure(augStart);
-//     for(int v : temp){current.insert(v);}
-        
-//     for(int j = 0; j < str.size(); j++){
-//         if(current.find(augAcc) != current.end() && !matchEnd){
-//             if(augStart != nfaStart){
-//                 delete nfa[-1];
-//                 nfa.erase(-1);
-//             }
-//             if(augAcc != nfaAcc){
-//                 nfa[nfaAcc]->out1 = nullptr;
-//                 delete nfa[-2];
-//                 nfa.erase(-2);
-//             }
-//             return true;
-//         }
-//         for(int p : current){
-//             if(nfa.at(p)->c == str[reversed ? str.size()-j-1 : j] && nfa.at(p)->out1){
-//                 next.insert(nfa.at(p)->out1->ID);
-//                 temp = epsilonClosure(nfa.at(p)->out1->ID);
-//                 for(int v : temp){next.insert(v);}
-//             }
-//         }
-//         // if next set contains the accept state and the string is completely used
-//         if(next.find(augAcc) != next.end() && (j == str.size()-1 || !matchEnd)){
-//             if(augStart != nfaStart){
-//                 delete nfa[-1];
-//                 nfa.erase(-1);
-//             }
-//             if(augAcc != nfaAcc){
-//                 nfa[nfaAcc]->out1 = nullptr;
-//                 delete nfa[-2];
-//                 nfa.erase(-2);
-//             }
-//             return true;
-//         }
-//         // continue searching the string for a match if next is empty
-//         if(!next.size()){
-//             break;
-//         }
-//         current = next;
-//         next.clear();
-//     }
-//     // check if the start state is also an accept state via epsilon
-//     std::unordered_set<int> t;
-//     t.insert(augStart);
-//     std::unordered_set<int> t1 = epsilonClosure(augStart);
-//     for(int v : t1){t.insert(v);}
-//     if(t.find(nfaAcc) != t.end()){
-//         if(augStart != nfaStart){
-//             delete nfa[-1];
-//             nfa.erase(-1);
-//         }
-//         if(augAcc != nfaAcc){
-//             nfa[nfaAcc]->out1 = nullptr;
-//             delete nfa[-2];
-//             nfa.erase(-2);
-//         }
-//         return true;
-//     }
-    
-//     if(augStart != nfaStart){
-//         delete nfa[-1];
-//         nfa.erase(-1);
-//     }
-//     if(augAcc != nfaAcc){
-//         nfa[nfaAcc]->out1 = nullptr;
-//         delete nfa[-2];
-//         nfa.erase(-2);
-//     }
-//     return false;
-// }
+    if(dfaStart->accept)
+        return true;
+
+    // iterate only once through the string if matchStart
+    int cmp = matchStart ? 1 : str.size();
+    for(int i = 0; i < cmp; i++){
+        currentState = dfaStart;
+        int lastAcc = -1;
+
+        for(int j = i; j < str.size(); j++){
+            if(currentState->accept && !matchEnd)
+                return true;
+            
+            currentState = nextDFA(str[reversed ? str.size()-j-1 : j], currentState);
+
+            // if next set contains the accept state and the string is completely used
+            if(currentState->accept && j == str.size()-1){
+                return true;
+            }
+            // continue searching the string for a match if currentState is reject
+            if(currentState == reject){
+                break;
+            }
+        }
+    }
+    return false;
+}
 
 /*
     Returns a list of positions and strings that the pattern matches from the left
