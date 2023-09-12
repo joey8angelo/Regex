@@ -56,8 +56,6 @@ std::pair<int, std::string> Regex::find(const std::string& str){
 
 /*
     Returns true if any sequence of characters leads to an accept state
-    Augments the nfa with .* at the start/end to nondeterministically find the accept state
-    if its not necessary to match from the start/end of the string
 */
 bool Regex::test(const std::string& str){
     Regex::DFAState* currentState;
