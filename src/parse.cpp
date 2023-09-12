@@ -2,6 +2,10 @@
 
 int id = 0;
 
+/*
+    Start parsing the regular expression adds a state in front
+    and back to act as start and accept states
+*/
 void Regex::parse(){
     int p;
     if(reg.size() && reg[0] == '^')
@@ -26,10 +30,14 @@ void Regex::parse(){
     nfaStart = s->ID;
     nfaAcc = e->ID;
 
-    // printNFAStates();
     id=0;
 }
 
+/*
+    Main parsing logic, given a position in the regular expression
+    parse subexpressions and concatenate them to the existing expression
+    or if reverse is toggled concatenate the existing expression to the next subexpression
+*/
 std::pair<Regex::NFAState*, std::vector<int>> Regex::parse(int& currPos){
     Regex::NFAState*i,*s;
     std::vector<int> c,e;
@@ -84,6 +92,11 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::parse(int& currPos){
     }
     return {i,c};
 }
+
+/*
+    Parses a group, returns when a ) is seen, allows for checking balanced parenthesis
+    Uses a single lookahead to apply operators on the group
+*/
 std::pair<Regex::NFAState*, std::vector<int>> Regex::parseGroup(int& currPos){
     Regex::NFAState*i,*s;
     std::vector<int> c,e;
@@ -168,6 +181,11 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::parseGroup(int& currPos){
 
     return {i,c};
 }
+
+/*
+    Parse a character class, create a state with a list of characters to transition on
+    uses a single lookahead to apply operators on the character class
+*/
 std::pair<Regex::NFAState*, std::vector<int>> Regex::parseCharClass(int& currPos){
     std::string t = "";
     int p = currPos-1;
@@ -249,6 +267,11 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::parseCharClass(int& currPos
 
     return temp;
 }
+
+/*
+    Parse an escape sequence, checks if the symbol following '\\' is special, if not it can be treated literally
+    uses a single lookahead to apply operators on the character
+*/
 std::pair<Regex::NFAState*, std::vector<int>> Regex::parseSpecial(int& currPos){
     std::unordered_map<char, std::string> special = {{'.', "^\n\r"}, {'S', "^\t\n\v\f\r \xA0"}, {'s', "\t\n\v\f\r \xA0"},
                                                             {'W', "^abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"},
@@ -289,6 +312,11 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::parseSpecial(int& currPos){
 
     return temp;
 }
+
+/*
+    Parse a single character, makes a state with the current character as a transition
+    uses a single lookahead to apply operators on the character
+*/
 std::pair<Regex::NFAState*, std::vector<int>> Regex::parseChar(int& currPos){
     Regex::NFAState* a = new Regex::NFAState(reg[currPos], id++, &nfa);
     std::pair<Regex::NFAState*, std::vector<int>> temp = std::make_pair(a, std::vector<int>({a->ID}));
@@ -316,6 +344,12 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::parseChar(int& currPos){
     return temp;
 }
 
+/*
+    Parses the interval operator and applies the transformation to the given nfa subsequence, e
+    {l,r} -> e^l e?^r-l
+    {l,} -> e^l e*
+    {l} -> e^l
+*/
 std::pair<Regex::NFAState*, std::vector<int>> Regex::parseInterval(Regex::NFAState* a, std::vector<int> b, int& currPos){
     int* tid = &id;
     int init = currPos-1;
@@ -427,6 +461,9 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::parseInterval(Regex::NFASta
     return {i,c};
 }
 
+/*
+    Make a deep copy of the nfa states in the given list
+*/
 std::pair<Regex::NFAState*, std::vector<int>> Regex::copy(std::unordered_set<int>& ls, int s, std::vector<int> e){
     std::unordered_map<int,int> mp;
     for(int i : ls){
@@ -453,7 +490,10 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::copy(std::unordered_set<int
     return std::make_pair(nfa[mp[s]], re);
 }
 
-std::unordered_set<int> Regex::makeList(Regex::NFAState* s, std::vector<int> e){
+/*
+    Make a list of states in a given start and end of an nfa expression
+*/
+std::unordered_set<int> Regex::makeList(Regex::NFAState* s, const std::vector<int>& e) const{
     std::unordered_set<int> states;
     std::vector<Regex::NFAState*> stack;
     std::unordered_set<int> eL;
@@ -470,11 +510,9 @@ std::unordered_set<int> Regex::makeList(Regex::NFAState* s, std::vector<int> e){
     while(stack.size()){
         Regex::NFAState* c = stack[stack.size()-1];
         stack.pop_back();
-        // do not look at out one if e is the current state
-        // no operator *,|,+,? will use out1 for the final nodes
-        // this means out2 may point back into the current subsequence,
-        // and out1 will always point either to nothing or outside
-        // the current subsequence
+        // The end of a subexpression will always reserve out1 for later concatenation
+        // if the current state is in the end list do not leave the given subexpression by
+        // looking at out1
         if(c->out1 && states.find(c->out1->ID) == states.end() && eL.find(c->ID) == eL.end()){
             states.insert(c->out1->ID);
             stack.push_back(c->out1);
@@ -487,6 +525,12 @@ std::unordered_set<int> Regex::makeList(Regex::NFAState* s, std::vector<int> e){
     return states;
 }
 
+/*
+    Applies the * operator on the given nfa subexpression
+     |------>
+    >c <--|
+     |--> e
+*/
 std::pair<Regex::NFAState*, std::vector<int>> Regex::doStar(Regex::NFAState* a, std::vector<int> b){
     Regex::NFAState*c;
     c = new Regex::NFAState(id++, &nfa);
@@ -500,6 +544,14 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::doStar(Regex::NFAState* a, 
 
     return std::make_pair(c, b);
 }
+
+/*
+    Applies the ? operator on the given nfa subexpression
+
+     |-------->
+    >c
+     |--> e -->
+*/
 std::pair<Regex::NFAState*, std::vector<int>> Regex::doQuestion(Regex::NFAState* a, std::vector<int> b){
     Regex::NFAState*c;
     c = new Regex::NFAState(id++, &nfa);
@@ -509,6 +561,15 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::doQuestion(Regex::NFAState*
 
     return std::make_pair(c, b);
 }
+
+/*
+    Applies the + operator on the given subexpression
+
+    |------>
+    c <--|
+    |--> e
+         ^
+*/
 std::pair<Regex::NFAState*, std::vector<int>> Regex::doPlus(Regex::NFAState* a, std::vector<int> b){
     Regex::NFAState*c;
     c = new Regex::NFAState(id++, &nfa);
@@ -522,6 +583,14 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::doPlus(Regex::NFAState* a, 
 
     return std::make_pair(a, b);
 }
+
+/*
+    Applies the | operator on the given subexpression, parses the right hand side of the operator
+
+     |--> e1 -->
+    >c
+     |--> e2 -->
+*/
 std::pair<Regex::NFAState*, std::vector<int>> Regex::doPipe(Regex::NFAState* a, std::vector<int> b, int& currPos){
     std::pair<Regex::NFAState*, std::vector<int>> temp;
     if(reg[currPos] == '('){
