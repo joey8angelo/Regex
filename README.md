@@ -1,8 +1,8 @@
 # Regex
 
-A C++ implementation of a regular expression engine. This engine uses Thompson's NFA construction to build an NFA from a regular expression, it then does a BFS through the NFA over an input to determine a match. Thompsons construction guarantees no more than 2n = O(n) states for a size n regular expression, and matching a full string against the NFA is O(m) time where m is the size of the string.
+A C++ implementation of a regular expression engine. This engine uses a varitation of Thompson's NFA construction, where each character/metacharacter creates exactly one state, to build an NFA from a regular expression, it then does a BFS through the NFA over an input to determine a match. Matching a full string against the NFA is O(m) time where m is the size of the string.
 ![RegexFind](https://github.com/joey8angelo/Regex/assets/59240186/923e7e6d-65f4-4fc7-af92-688e11d8bec8)
-Matching a<sup>n</sup> against a?<sup>n</sup>a<sup>n</sup>. Regex(red) compared to other regular expression implementations.
+Matching a<sup>n</sup> against a?<sup>n</sup>a<sup>n</sup>. Regex(red) compared to other regular expression implementations. This example is superlinear O(nm) as the regular expression and string grow linearly.
 
 ## Usage
 Supply the regular expression through the Regex constructor.
