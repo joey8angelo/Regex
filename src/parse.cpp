@@ -76,7 +76,7 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::parse(int& currPos){
             c=e;
         }
         else{
-            for(int v : c){
+            for(int v : e){
                 nfa[v]->out1 = i;
             }
             i=s;
@@ -520,7 +520,7 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::doPlus(Regex::NFAState* a, 
     b.clear();
     b.push_back(c->ID);
 
-    return std::make_pair(c, b);
+    return std::make_pair(a, b);
 }
 std::pair<Regex::NFAState*, std::vector<int>> Regex::doPipe(Regex::NFAState* a, std::vector<int> b, int& currPos){
     std::pair<Regex::NFAState*, std::vector<int>> temp;
