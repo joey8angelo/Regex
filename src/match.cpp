@@ -133,9 +133,7 @@ std::vector<std::pair<int, std::string>> Regex::group(const std::string& str){
                     res.push_back(std::make_pair(str.size()-j-1, str.substr(str.size()-j-1, str.size()-(str.size()-j-1))));
                 else
                     res.push_back(std::make_pair(i, str.substr(i, j-i+1)));
-                if(j == str.size()-1)
-                    j++;
-                i=j-1;
+                i=j;
                 break;
             }
             // if the currentState is in reject no possible paths can be taken
@@ -145,8 +143,6 @@ std::vector<std::pair<int, std::string>> Regex::group(const std::string& str){
                     res.push_back(std::make_pair(lastAcc, str.substr(lastAcc, str.size()-lastAcc)));
                 else
                     res.push_back(std::make_pair(i, str.substr(i, lastAcc-i)));
-                if(j == str.size()-1)
-                    j++;
                 i=j-1;
                 break;
             }
