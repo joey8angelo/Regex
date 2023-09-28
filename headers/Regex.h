@@ -16,13 +16,11 @@ class Regex{
         also makes negating a group much simpler by !ing the result of looking up a character
     */
     struct CharacterClass{
-        CharacterClass(std::string, bool);
+        CharacterClass(std::string);
         ~CharacterClass();
         std::unordered_set<char> characters;
         bool negated;
-        bool epsilon;
         bool operator==(char);
-        std::string stringify();
     };
     /*
         A NFA state, according to thompson's construction no state will have more than 2 outgoing edges
@@ -30,15 +28,40 @@ class Regex{
         the edge is a pointer to other NFA states where the character to transition on is a CharacterClass
         epsilon is denoted with a boolean value in CharacterClass
     */
-    struct NFAState{
-        NFAState(int, std::unordered_map<int, Regex::NFAState*>*);
-        NFAState(char, int, std::unordered_map<int, Regex::NFAState*>* nfa);
-        NFAState(std::string, int, std::unordered_map<int, Regex::NFAState*>* nfa);
+    class NFAState{
+        public:
+        NFAState(int i): ID(i), out1(nullptr), out2(nullptr){}
         ~NFAState();
         int ID;
-        Regex::CharacterClass c;
         Regex::NFAState* out1;
         Regex::NFAState* out2;
+        virtual bool isEpsilon(){ return false; }
+        virtual bool hasChar(char ch){ return false; }
+        virtual NFAState* makeCopy(){ return nullptr; }
+    };
+    class NFAStateChar: public NFAState{
+        public:
+        NFAStateChar(int i, char ch): NFAState(i), c(ch){}
+        char c;
+        virtual bool isEpsilon(){ return false; }
+        virtual bool hasChar(char ch){ return ch == c; }
+        virtual NFAState* makeCopy(){ return new NFAStateChar(-1, c); }
+    };
+    class NFAStateCharClass: public NFAState{
+        public:
+        NFAStateCharClass(int i, std::string s): NFAState(i), cc(Regex::CharacterClass(s)){}
+        NFAStateCharClass(int i, Regex::CharacterClass chc): NFAState(i), cc(chc){}
+        Regex::CharacterClass cc;
+        virtual bool isEpsilon(){ return false; }
+        virtual bool hasChar(char ch){ return cc == ch; }
+        virtual NFAState* makeCopy(){return new NFAStateCharClass(-1, cc); }
+    };
+    class NFAStateEpsilon: public NFAState{
+        public:
+        NFAStateEpsilon(int i): NFAState(i){}
+        virtual bool isEpsilon(){ return true; }
+        virtual bool hasChar(char ch){ return false; }
+        virtual NFAState* makeCopy(){ return new NFAStateEpsilon(-1); }
     };
     /*
         A DFAState, these states are generated as needed when matching a string against the regular expression
@@ -71,6 +94,7 @@ class Regex{
     bool reversed;
     int nfaStart;
     int nfaAcc;
+    int id;
     // lookup nfa state by its id
     std::unordered_map<int, Regex::NFAState*> nfa;
     // lookup dfa state by its set of nfa states
@@ -95,4 +119,7 @@ class Regex{
     std::pair<Regex::NFAState*, std::vector<int>> copy(std::unordered_set<int>&, int, std::vector<int>);
     std::unordered_set<int> makeList(Regex::NFAState*, const std::vector<int>&) const;
     Regex::DFAState* nextDFA(char, Regex::DFAState*);
+    Regex::NFAState* makeEpsilonState();
+    Regex::NFAState* makeCharState(char);
+    Regex::NFAState* makeCharClassState(std::string);
 };

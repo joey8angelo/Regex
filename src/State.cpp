@@ -1,11 +1,4 @@
 #include "../headers/Regex.h"
-// build state with epsilon transition
-Regex::NFAState::NFAState(int i, std::unordered_map<int, Regex::NFAState*>* nfa) : ID(i), c(Regex::CharacterClass("", true)), out1(nullptr), out2(nullptr) { (*nfa)[ID] = this; }
-// build state with char transition
-Regex::NFAState::NFAState(char c, int i, std::unordered_map<int, Regex::NFAState*>* nfa) : ID(i), c(Regex::CharacterClass(std::string(1,c), false)), out1(nullptr), out2(nullptr) { (*nfa)[ID] = this; }
-// build state with string transition (character class)
-Regex::NFAState::NFAState(std::string s, int i, std::unordered_map<int, Regex::NFAState*>* nfa) : ID(i), c(Regex::CharacterClass(s, false)), out1(nullptr), out2(nullptr) { (*nfa)[ID] = this; }
-
 /*
     Deletes nfa
 */
@@ -30,7 +23,7 @@ Regex::DFAState* Regex::nextDFA(char c, Regex::DFAState* d){
     if(d->out.find(c) == d->out.end()){
         std::set<int>* t = new std::set<int>;
         for(auto p : *(d->ls)){
-            if(nfa[p]->c == c && nfa[p]->out1){
+            if(nfa[p]->hasChar(c) && nfa[p]->out1){
                 t->insert(nfa[p]->out1->ID);
                 epsilonClosure(nfa[p]->out1->ID, t);
             }
