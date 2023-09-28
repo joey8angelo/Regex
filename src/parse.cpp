@@ -238,7 +238,11 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::parseCharClass(int& currPos
     if((currPos == reg.size()-1 && reg[currPos] != ']') || currPos == reg.size())
         throw std::runtime_error("Unbalanced square brackets");
 
-    Regex::NFAState* a = makeCharClassState(t);
+    Regex::NFAState* a;
+    if(t.size() == 1)
+        a = makeCharState(t[0]);
+    else
+        a = makeCharClassState(t);
     std::pair<Regex::NFAState*, std::vector<int>> temp = std::make_pair(a, std::vector<int>({a->ID}));
     if(reg[currPos+1] == '*'){
         currPos++;
