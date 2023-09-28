@@ -464,7 +464,9 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::copy(std::unordered_set<int
     std::unordered_map<int,int> mp;
     for(int i : ls){
         auto t = nfa[i]->makeCopy();
-        t->ID = id++;
+        nfa[id] = t;
+        t->ID = id;
+        mp[i] = id++;
     }
 
     for(int i : ls){

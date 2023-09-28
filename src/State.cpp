@@ -92,3 +92,15 @@ void Regex::deleteDFA(Regex::DFAState* st){
 Regex::DFAState::~DFAState(){
     delete ls;
 }
+
+bool Regex::NFAStateChar::isEpsilon(){ return false; }
+bool Regex::NFAStateChar::hasChar(char ch){ return ch == c; }
+Regex::NFAState* Regex::NFAStateChar::makeCopy(){ return new NFAStateChar(-1, c); }
+
+bool Regex::NFAStateCharClass::isEpsilon(){ return false; }
+bool Regex::NFAStateCharClass::hasChar(char ch){ return cc == ch; }
+Regex::NFAState* Regex::NFAStateCharClass::makeCopy(){return new NFAStateCharClass(-1, cc); }
+
+bool Regex::NFAStateEpsilon::isEpsilon(){ return true; }
+bool Regex::NFAStateEpsilon::hasChar(char ch){ return false; }
+Regex::NFAState* Regex::NFAStateEpsilon::makeCopy(){ return new NFAStateEpsilon(-1); }

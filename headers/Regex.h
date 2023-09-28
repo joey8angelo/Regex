@@ -23,10 +23,13 @@ class Regex{
         bool operator==(char);
     };
     /*
-        A NFA state, according to thompson's construction no state will have more than 2 outgoing edges
-        and if the edge is not epsilon it will only ever have 1 outgoing edge
-        the edge is a pointer to other NFA states where the character to transition on is a CharacterClass
-        epsilon is denoted with a boolean value in CharacterClass
+        Abstract NFAState, according to thompson's construction no state will 
+        have more than 2 outgoing edges, and if the edge is not epsilon 
+        it will only ever have 1 outgoing edge the edge is a pointer to 
+        other NFA states where the character to transition on is defined
+        in respective derived classes
+        Regex can check if a given character transitions on this state
+        with the hasChar method
     */
     class NFAState{
         public:
@@ -35,34 +38,47 @@ class Regex{
         int ID;
         Regex::NFAState* out1;
         Regex::NFAState* out2;
-        virtual bool isEpsilon(){ return false; }
-        virtual bool hasChar(char ch){ return false; }
-        virtual NFAState* makeCopy(){ return nullptr; }
+        virtual bool isEpsilon() = 0;
+        virtual bool hasChar(char ch) = 0;
+        virtual NFAState* makeCopy() = 0;
     };
+
+    /*
+        Derived NFAState where the transition is a character
+    */
     class NFAStateChar: public NFAState{
         public:
         NFAStateChar(int i, char ch): NFAState(i), c(ch){}
         char c;
-        virtual bool isEpsilon(){ return false; }
-        virtual bool hasChar(char ch){ return ch == c; }
-        virtual NFAState* makeCopy(){ return new NFAStateChar(-1, c); }
+        virtual bool isEpsilon();
+        virtual bool hasChar(char);
+        virtual NFAState* makeCopy();
     };
+
+    /*
+        Derived NFAState where the transition is a CharacterClass
+    */
     class NFAStateCharClass: public NFAState{
         public:
         NFAStateCharClass(int i, std::string s): NFAState(i), cc(Regex::CharacterClass(s)){}
         NFAStateCharClass(int i, Regex::CharacterClass chc): NFAState(i), cc(chc){}
         Regex::CharacterClass cc;
-        virtual bool isEpsilon(){ return false; }
-        virtual bool hasChar(char ch){ return cc == ch; }
-        virtual NFAState* makeCopy(){return new NFAStateCharClass(-1, cc); }
+        virtual bool isEpsilon();
+        virtual bool hasChar(char);
+        virtual NFAState* makeCopy();
     };
+
+    /*
+        Derived NFAState where the transition is epsilon
+    */
     class NFAStateEpsilon: public NFAState{
         public:
         NFAStateEpsilon(int i): NFAState(i){}
-        virtual bool isEpsilon(){ return true; }
-        virtual bool hasChar(char ch){ return false; }
-        virtual NFAState* makeCopy(){ return new NFAStateEpsilon(-1); }
+        virtual bool isEpsilon();
+        virtual bool hasChar(char);
+        virtual NFAState* makeCopy();
     };
+
     /*
         A DFAState, these states are generated as needed when matching a string against the regular expression
         a state is a list of NFAState ids, with transitions on characters to other DFAStates
