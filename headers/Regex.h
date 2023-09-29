@@ -25,7 +25,7 @@ class Regex{
     /*
         Abstract NFAState, according to thompson's construction no state will 
         have more than 2 outgoing edges, and if the edge is not epsilon 
-        it will only ever have 1 outgoing edge the edge is a pointer to 
+        it will only ever have 1 outgoing edge, the edge is a pointer to 
         other NFA states where the character to transition on is defined
         in respective derived classes
         Regex can check if a given character transitions on this state
@@ -34,10 +34,9 @@ class Regex{
     class NFAState{
         public:
         NFAState(int i): ID(i), out1(nullptr), out2(nullptr){}
-        ~NFAState();
         int ID;
-        Regex::NFAState* out1;
-        Regex::NFAState* out2;
+        NFAState* out1;
+        NFAState* out2;
         virtual bool isEpsilon() = 0;
         virtual bool hasChar(char ch) = 0;
         virtual NFAState* makeCopy() = 0;
@@ -46,9 +45,9 @@ class Regex{
     /*
         Derived NFAState where the transition is a character
     */
-    class NFAStateChar: public NFAState{
+    class NFAStateChar: public Regex::NFAState{
         public:
-        NFAStateChar(int i, char ch): NFAState(i), c(ch){}
+        NFAStateChar(int, char);
         char c;
         virtual bool isEpsilon();
         virtual bool hasChar(char);
@@ -58,11 +57,11 @@ class Regex{
     /*
         Derived NFAState where the transition is a CharacterClass
     */
-    class NFAStateCharClass: public NFAState{
+    class NFAStateCharClass: public Regex::NFAState{
         public:
-        NFAStateCharClass(int i, std::string s): NFAState(i), cc(Regex::CharacterClass(s)){}
-        NFAStateCharClass(int i, Regex::CharacterClass chc): NFAState(i), cc(chc){}
-        Regex::CharacterClass cc;
+        NFAStateCharClass(int, std::string);
+        NFAStateCharClass(int, CharacterClass);
+        CharacterClass cc;
         virtual bool isEpsilon();
         virtual bool hasChar(char);
         virtual NFAState* makeCopy();
@@ -71,9 +70,9 @@ class Regex{
     /*
         Derived NFAState where the transition is epsilon
     */
-    class NFAStateEpsilon: public NFAState{
+    class NFAStateEpsilon: public Regex::NFAState{
         public:
-        NFAStateEpsilon(int i): NFAState(i){}
+        NFAStateEpsilon(int);
         virtual bool isEpsilon();
         virtual bool hasChar(char);
         virtual NFAState* makeCopy();
@@ -87,7 +86,7 @@ class Regex{
         DFAState(std::set<int>*);
         DFAState(std::set<int>*, bool);
         ~DFAState();
-        std::unordered_map<char, Regex::DFAState*> out;
+        std::unordered_map<char, DFAState*> out;
         std::set<int>* ls;
         bool accept;
     };
@@ -112,9 +111,9 @@ class Regex{
     int nfaAcc;
     int id;
     // lookup nfa state by its id
-    std::unordered_map<int, Regex::NFAState*> nfa;
+    std::unordered_map<int, NFAState*> nfa;
     // lookup dfa state by its set of nfa states
-    std::unordered_map<std::set<int>*, Regex::DFAState*, Regex::setHash> dfa;
+    std::unordered_map<std::set<int>*, Regex::DFAState*, setHash> dfa;
     Regex::DFAState* reject;
     Regex::DFAState* dfaStart;
     void parse();

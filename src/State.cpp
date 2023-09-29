@@ -9,10 +9,32 @@ void Regex::deleteNFA(){
     nfa.clear();
 }
 
-Regex::NFAState::~NFAState(){}
-
 Regex::DFAState::DFAState(std::set<int>* s) : accept(false), ls(s){}
 Regex::DFAState::DFAState(std::set<int>* s, bool a) : accept(a), ls(s){}
+/*
+    Deletes dfa - does not delete dfaStart if there is one or given DFAState
+*/
+void Regex::deleteDFA(Regex::DFAState* st){
+    if(dfaStart){
+        dfa.erase(dfaStart->ls);
+        dfaStart->out.clear();
+    }
+    if(st){
+        dfa.erase(st->ls);
+        st->out.clear();
+    }
+    for(auto i = dfa.begin(); i != dfa.end(); i++){
+        delete i->second;
+    }
+    dfa.clear();
+    if(dfaStart)
+        dfa[dfaStart->ls] = dfaStart;
+    if(st)
+        dfa[st->ls] = st;
+}
+Regex::DFAState::~DFAState(){
+    delete ls;
+}
 
 /*
     Find the next DFA state on a given character from the current state
@@ -60,47 +82,25 @@ void Regex::buildDFAStart(){
     std::set<int>* c = new std::set<int>;
     epsilonClosure(nfaStart, c);
     c->insert(nfaStart);
-    dfaStart = new DFAState(c, c->find(nfaAcc) != c->end());
+    dfaStart = new Regex::DFAState(c, c->find(nfaAcc) != c->end());
     if(dfa.size() == CACHELIMIT){
         deleteDFA();
     }
     dfa[c] = dfaStart;
 }
 
-/*
-    Deletes dfa - does not delete dfaStart if there is one and given DFAState
-*/
-void Regex::deleteDFA(Regex::DFAState* st){
-    if(dfaStart){
-        dfa.erase(dfaStart->ls);
-        dfaStart->out.clear();
-    }
-    if(st){
-        dfa.erase(st->ls);
-        st->out.clear();
-    }
-    for(auto i = dfa.begin(); i != dfa.end(); i++){
-        delete i->second;
-    }
-    dfa.clear();
-    if(dfaStart)
-        dfa[dfaStart->ls] = dfaStart;
-    if(st)
-        dfa[st->ls] = st;
-}
-
-Regex::DFAState::~DFAState(){
-    delete ls;
-}
-
+Regex::NFAStateChar::NFAStateChar(int i, char ch): Regex::NFAState(i), c(ch){}
 bool Regex::NFAStateChar::isEpsilon(){ return false; }
 bool Regex::NFAStateChar::hasChar(char ch){ return ch == c; }
-Regex::NFAState* Regex::NFAStateChar::makeCopy(){ return new NFAStateChar(-1, c); }
+Regex::NFAState* Regex::NFAStateChar::makeCopy(){ return new Regex::NFAStateChar(-1, c); }
 
+Regex::NFAStateCharClass::NFAStateCharClass(int i, std::string s): Regex::NFAState(i), cc(Regex::CharacterClass(s)){}
+Regex::NFAStateCharClass::NFAStateCharClass(int i, Regex::CharacterClass chc): Regex::NFAState(i), cc(chc){}
 bool Regex::NFAStateCharClass::isEpsilon(){ return false; }
 bool Regex::NFAStateCharClass::hasChar(char ch){ return cc == ch; }
-Regex::NFAState* Regex::NFAStateCharClass::makeCopy(){return new NFAStateCharClass(-1, cc); }
+Regex::NFAState* Regex::NFAStateCharClass::makeCopy(){return new Regex::NFAStateCharClass(-1, cc); }
 
+Regex::NFAStateEpsilon::NFAStateEpsilon(int i): Regex::NFAState(i){}
 bool Regex::NFAStateEpsilon::isEpsilon(){ return true; }
 bool Regex::NFAStateEpsilon::hasChar(char ch){ return false; }
-Regex::NFAState* Regex::NFAStateEpsilon::makeCopy(){ return new NFAStateEpsilon(-1); }
+Regex::NFAState* Regex::NFAStateEpsilon::makeCopy(){ return new Regex::NFAStateEpsilon(-1); }
