@@ -1,6 +1,6 @@
 #include "../headers/Regex.h"
 
-Regex::Regex(std::string in) : reg(in), matchStart(false), matchEnd(false), reversed(false), dfaStart(nullptr), CACHELIMIT(200){
+Regex::Regex(std::string in) : reg(in), matchStart(false), matchEnd(false), reversed(false), dfaStart(nullptr), CACHELIMIT(200), id(0){
     if(in.size() && in[0] == '^')
         matchStart = true;
     if(in.size() && in[in.size()-1] == '$' && in.size() > 1 && in[in.size()-2] != '\\'){
@@ -39,13 +39,35 @@ void Regex::epsilonClosure(int n, std::set<int>* states) const{
     while(stack.size()){
         Regex::NFAState* top = stack[stack.size()-1];
         stack.pop_back();
-        if(top->c.epsilon && top->out1 != nullptr && states->find(top->out1->ID) == states->end()){
+        if(top->isEpsilon() && top->out1 != nullptr && states->find(top->out1->ID) == states->end()){
             states->insert(top->out1->ID);
             stack.push_back(top->out1);
         }
-        if(top->c.epsilon && top->out2 != nullptr && states->find(top->out2->ID) == states->end()){
+        if(top->isEpsilon() && top->out2 != nullptr && states->find(top->out2->ID) == states->end()){
             states->insert(top->out2->ID);
             stack.push_back(top->out2);
         }
     }
+}
+
+/*
+    make a new epsilon state and add it to nfa
+*/
+Regex::NFAState* Regex::makeEpsilonState(){
+    nfa[id] = new Regex::NFAStateEpsilon(id);
+    return nfa[id++];
+}
+/*
+    make a new char state and add it to nfa
+*/
+Regex::NFAState* Regex::makeCharState(char c){
+    nfa[id] = new Regex::NFAStateChar(id, c);
+    return nfa[id++];
+}
+/*
+    make a new CharacterClass state and add it to nfa
+*/
+Regex::NFAState* Regex::makeCharClassState(std::string s){
+    nfa[id] = new Regex::NFAStateCharClass(id, s);
+    return nfa[id++];
 }

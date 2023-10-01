@@ -16,30 +16,68 @@ class Regex{
         also makes negating a group much simpler by !ing the result of looking up a character
     */
     struct CharacterClass{
-        CharacterClass(std::string, bool);
+        CharacterClass(std::string);
         ~CharacterClass();
         std::unordered_set<char> characters;
         bool negated;
-        bool epsilon;
         bool operator==(char);
-        std::string stringify();
     };
     /*
-        A NFA state, according to thompson's construction no state will have more than 2 outgoing edges
-        and if the edge is not epsilon it will only ever have 1 outgoing edge
-        the edge is a pointer to other NFA states where the character to transition on is a CharacterClass
-        epsilon is denoted with a boolean value in CharacterClass
+        Abstract NFAState, according to thompson's construction no state will 
+        have more than 2 outgoing edges, and if the edge is not epsilon 
+        it will only ever have 1 outgoing edge, the edge is a pointer to 
+        other NFA states where the character to transition on is defined
+        in respective derived classes
+        Regex can check if a given character transitions on this state
+        with the hasChar method
     */
-    struct NFAState{
-        NFAState(int, std::unordered_map<int, Regex::NFAState*>*);
-        NFAState(char, int, std::unordered_map<int, Regex::NFAState*>* nfa);
-        NFAState(std::string, int, std::unordered_map<int, Regex::NFAState*>* nfa);
-        ~NFAState();
+    class NFAState{
+        public:
+        NFAState(int i): ID(i), out1(nullptr), out2(nullptr){}
         int ID;
-        Regex::CharacterClass c;
-        Regex::NFAState* out1;
-        Regex::NFAState* out2;
+        NFAState* out1;
+        NFAState* out2;
+        virtual bool isEpsilon() = 0;
+        virtual bool hasChar(char ch) = 0;
+        virtual NFAState* makeCopy() = 0;
     };
+
+    /*
+        Derived NFAState where the transition is a character
+    */
+    class NFAStateChar: public Regex::NFAState{
+        public:
+        NFAStateChar(int, char);
+        char c;
+        virtual bool isEpsilon();
+        virtual bool hasChar(char);
+        virtual NFAState* makeCopy();
+    };
+
+    /*
+        Derived NFAState where the transition is a CharacterClass
+    */
+    class NFAStateCharClass: public Regex::NFAState{
+        public:
+        NFAStateCharClass(int, std::string);
+        NFAStateCharClass(int, CharacterClass);
+        CharacterClass cc;
+        virtual bool isEpsilon();
+        virtual bool hasChar(char);
+        virtual NFAState* makeCopy();
+    };
+
+    /*
+        Derived NFAState where the transition is epsilon
+    */
+    class NFAStateEpsilon: public Regex::NFAState{
+        public:
+        NFAStateEpsilon(int);
+        virtual bool isEpsilon();
+        virtual bool hasChar(char);
+        virtual NFAState* makeCopy();
+    };
+
     /*
         A DFAState, these states are generated as needed when matching a string against the regular expression
         a state is a list of NFAState ids, with transitions on characters to other DFAStates
@@ -48,7 +86,7 @@ class Regex{
         DFAState(std::set<int>*);
         DFAState(std::set<int>*, bool);
         ~DFAState();
-        std::unordered_map<char, Regex::DFAState*> out;
+        std::unordered_map<char, DFAState*> out;
         std::set<int>* ls;
         bool accept;
     };
@@ -71,10 +109,11 @@ class Regex{
     bool reversed;
     int nfaStart;
     int nfaAcc;
+    int id;
     // lookup nfa state by its id
-    std::unordered_map<int, Regex::NFAState*> nfa;
+    std::unordered_map<int, NFAState*> nfa;
     // lookup dfa state by its set of nfa states
-    std::unordered_map<std::set<int>*, Regex::DFAState*, Regex::setHash> dfa;
+    std::unordered_map<std::set<int>*, Regex::DFAState*, setHash> dfa;
     Regex::DFAState* reject;
     Regex::DFAState* dfaStart;
     void parse();
@@ -95,4 +134,7 @@ class Regex{
     std::pair<Regex::NFAState*, std::vector<int>> copy(std::unordered_set<int>&, int, std::vector<int>);
     std::unordered_set<int> makeList(Regex::NFAState*, const std::vector<int>&) const;
     Regex::DFAState* nextDFA(char, Regex::DFAState*);
+    Regex::NFAState* makeEpsilonState();
+    Regex::NFAState* makeCharState(char);
+    Regex::NFAState* makeCharClassState(std::string);
 };

@@ -4,9 +4,7 @@
     If the first character is a ^ then the class is negated
     Inserts all the characters in the given string to the set
 */
-Regex::CharacterClass::CharacterClass(std::string ch, bool e) : negated(false), epsilon(e){
-    if(epsilon)
-        return;
+Regex::CharacterClass::CharacterClass(std::string ch) : negated(false){
     if(ch.size() && ch[0] == '^')
         negated = true;
 
@@ -23,12 +21,4 @@ Regex::CharacterClass::~CharacterClass() {}
 bool Regex::CharacterClass::operator==(char c){
     bool t = this->characters.find(c) != this->characters.end();
     return negated ? !t : t; 
-}
-
-std::string Regex::CharacterClass::stringify(){
-    std::string r = "";
-    for(char ch : characters){
-        r += ch;
-    }
-    return r;
 }

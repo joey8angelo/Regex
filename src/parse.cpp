@@ -1,7 +1,5 @@
 #include "../headers/Regex.h"
 
-int id = 0;
-
 /*
     Start parsing the regular expression adds a state in front
     and back to act as start and accept states
@@ -14,8 +12,8 @@ void Regex::parse(){
         p = 0;
     auto t = parse(p);
 
-    Regex::NFAState* s = new Regex::NFAState(id++, &nfa);
-    Regex::NFAState* e = new Regex::NFAState(id++, &nfa);
+    Regex::NFAState* s = makeEpsilonState();
+    Regex::NFAState* e = makeEpsilonState();
 
     if(t.first){
         s->out1 = t.first;
@@ -29,8 +27,6 @@ void Regex::parse(){
 
     nfaStart = s->ID;
     nfaAcc = e->ID;
-
-    id=0;
 }
 
 /*
@@ -242,7 +238,11 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::parseCharClass(int& currPos
     if((currPos == reg.size()-1 && reg[currPos] != ']') || currPos == reg.size())
         throw std::runtime_error("Unbalanced square brackets");
 
-    Regex::NFAState* a = new Regex::NFAState(t, id++, &nfa);
+    Regex::NFAState* a;
+    if(t.size() == 1)
+        a = makeCharState(t[0]);
+    else
+        a = makeCharClassState(t);
     std::pair<Regex::NFAState*, std::vector<int>> temp = std::make_pair(a, std::vector<int>({a->ID}));
     if(reg[currPos+1] == '*'){
         currPos++;
@@ -279,13 +279,13 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::parseSpecial(int& currPos){
                                                             {'d', "0123456789"}, {'D', "^0123456789"}};
     Regex::NFAState* a;
     if(reg[currPos] == '.' && currPos > 0 && reg[currPos-1] == '\\'){
-        a = new Regex::NFAState(reg[currPos], id++, &nfa);
+        a = makeCharState(reg[currPos]);
     }
     else if(special.find(reg[currPos]) != special.end()){
-        a = new Regex::NFAState(special[reg[currPos]], id++, &nfa);
+        a = makeCharClassState(special[reg[currPos]]);
     }
     else{
-        a = new Regex::NFAState(reg[currPos], id++, &nfa);
+        a = makeCharState(reg[currPos]);
     }
 
     std::pair<Regex::NFAState*, std::vector<int>> temp = std::make_pair(a, std::vector<int>({a->ID}));
@@ -318,7 +318,7 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::parseSpecial(int& currPos){
     uses a single lookahead to apply operators on the character
 */
 std::pair<Regex::NFAState*, std::vector<int>> Regex::parseChar(int& currPos){
-    Regex::NFAState* a = new Regex::NFAState(reg[currPos], id++, &nfa);
+    Regex::NFAState* a = makeCharState(reg[currPos]);
     std::pair<Regex::NFAState*, std::vector<int>> temp = std::make_pair(a, std::vector<int>({a->ID}));
     if(reg[currPos+1] == '*'){
         currPos++;
@@ -467,12 +467,10 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::parseInterval(Regex::NFASta
 std::pair<Regex::NFAState*, std::vector<int>> Regex::copy(std::unordered_set<int>& ls, int s, std::vector<int> e){
     std::unordered_map<int,int> mp;
     for(int i : ls){
-        std::string cc = nfa[i]->c.stringify();
-        mp[i] = id;
-        if(!cc.size())
-            auto t = new Regex::NFAState(id++, &nfa);
-        else
-            auto t = new Regex::NFAState(cc, id++, &nfa);
+        auto t = nfa[i]->makeCopy();
+        nfa[id] = t;
+        t->ID = id;
+        mp[i] = id++;
     }
 
     for(int i : ls){
@@ -532,8 +530,7 @@ std::unordered_set<int> Regex::makeList(Regex::NFAState* s, const std::vector<in
      |--> e
 */
 std::pair<Regex::NFAState*, std::vector<int>> Regex::doStar(Regex::NFAState* a, std::vector<int> b){
-    Regex::NFAState*c;
-    c = new Regex::NFAState(id++, &nfa);
+    Regex::NFAState* c = makeEpsilonState();
     
     c->out2 = a;
     for(int v : b){
@@ -553,8 +550,7 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::doStar(Regex::NFAState* a, 
      |--> e -->
 */
 std::pair<Regex::NFAState*, std::vector<int>> Regex::doQuestion(Regex::NFAState* a, std::vector<int> b){
-    Regex::NFAState*c;
-    c = new Regex::NFAState(id++, &nfa);
+    Regex::NFAState* c = makeEpsilonState();
 
     c->out2 = a;
     b.push_back(c->ID);
@@ -571,8 +567,7 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::doQuestion(Regex::NFAState*
          ^
 */
 std::pair<Regex::NFAState*, std::vector<int>> Regex::doPlus(Regex::NFAState* a, std::vector<int> b){
-    Regex::NFAState*c;
-    c = new Regex::NFAState(id++, &nfa);
+    Regex::NFAState* c = makeEpsilonState();
 
     c->out2 = a;
     for(int v : b){
@@ -620,8 +615,7 @@ std::pair<Regex::NFAState*, std::vector<int>> Regex::doPipe(Regex::NFAState* a, 
         temp = parseChar(currPos);
     }
 
-    Regex::NFAState*c;
-    c = new Regex::NFAState(id++, &nfa);
+    Regex::NFAState* c = makeEpsilonState();
 
     c->out1 = a;
     c->out2 = temp.first;
