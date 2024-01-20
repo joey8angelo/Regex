@@ -31,21 +31,32 @@ Regex::~Regex(){
 /*
     Given a state and a set insert the states that can be reached through epsilon into the set
 */
-void Regex::epsilonClosure(int n, std::set<int>* states) const{
+void Regex::epsilonClosure(int n, std::set<int>* states){
+    if(epsilonClosureCache.find(n) != epsilonClosureCache.end()){
+        for(auto i : epsilonClosureCache.at(n)){
+            states->insert(i);
+        }
+        return;
+    }
     Regex::NFAState* s = nfa.at(n);
     std::vector<Regex::NFAState*> stack;
     stack.push_back(s);
+    epsilonClosureCache[n] = std::unordered_set<int>();
     
     while(stack.size()){
         Regex::NFAState* top = stack[stack.size()-1];
         stack.pop_back();
-        if(top->isEpsilon() && top->out1 != nullptr && states->find(top->out1->ID) == states->end()){
-            states->insert(top->out1->ID);
-            stack.push_back(top->out1);
-        }
-        if(top->isEpsilon() && top->out2 != nullptr && states->find(top->out2->ID) == states->end()){
-            states->insert(top->out2->ID);
-            stack.push_back(top->out2);
+        if(top->isEpsilon()){
+            if(top->out1 != nullptr && states->find(top->out1->ID) == states->end()){
+                states->insert(top->out1->ID);
+                stack.push_back(top->out1);
+                epsilonClosureCache[n].insert(top->out1->ID);
+            }
+            if(top->out2 != nullptr && states->find(top->out2->ID) == states->end()){
+                states->insert(top->out2->ID);
+                stack.push_back(top->out2);
+                epsilonClosureCache[n].insert(top->out2->ID);
+            }
         }
     }
 }
