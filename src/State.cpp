@@ -41,7 +41,6 @@ Regex::DFAState::~DFAState(){
 */
 Regex::DFAState* Regex::nextDFA(char c, Regex::DFAState* d){
     // if next state does not exist build it
-    bool del = dfa.size() == CACHELIMIT;
     if(d->out.find(c) == d->out.end()){
         std::set<int>* t = new std::set<int>;
         for(auto p : *(d->ls)){
