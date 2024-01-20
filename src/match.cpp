@@ -1,6 +1,5 @@
 #include "../headers/Regex.h"
 
-int num = -100;
 /*
     Find the longest match from the left. NOT the longest match in the string
     If we are searching the back of the string because of a $
@@ -65,7 +64,7 @@ bool Regex::test(const std::string& str){
     // if the string is empty see if we can match on epsilon
     if(!str.size()){
         if(dfaStart->accept)
-            true;
+            return true;
         else
             return false;
     }
