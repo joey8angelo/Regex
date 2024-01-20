@@ -114,12 +114,13 @@ class Regex{
     std::unordered_map<int, NFAState*> nfa;
     // lookup dfa state by its set of nfa states
     std::unordered_map<std::set<int>*, Regex::DFAState*, setHash> dfa;
+    std::unordered_map<int, std::unordered_set<int>> epsilonClosureCache;
     Regex::DFAState* reject;
     Regex::DFAState* dfaStart;
     void parse();
     void deleteNFA();
     void deleteDFA(Regex::DFAState* st = nullptr);
-    void epsilonClosure(int, std::set<int>*) const;
+    void epsilonClosure(int, std::set<int>*);
     void buildDFAStart();
     std::pair<Regex::NFAState*, std::vector<int>> parse(int&);
     std::pair<Regex::NFAState*, std::vector<int>> parseGroup(int&);
