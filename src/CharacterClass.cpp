@@ -8,7 +8,7 @@ Regex::CharacterClass::CharacterClass(std::string ch) : negated(false){
     if(ch.size() && ch[0] == '^')
         negated = true;
 
-    for(int i = (negated ? 1 : 0); i < ch.size(); i++){
+    for(std::size_t i = (negated ? 1 : 0); i < ch.size(); i++){
         characters.insert(ch[i]);
     }
 }

@@ -25,7 +25,7 @@ std::pair<int, std::string> Regex::find(const std::string& str){
         currentState = dfaStart;
         int lastAcc = -1;
 
-        for(int j = i; j < str.size(); j++){
+        for(std::size_t j = i; j < str.size(); j++){
             if(currentState->accept)
                 lastAcc = reversed ? str.size()-j : j;
             
@@ -76,9 +76,8 @@ bool Regex::test(const std::string& str){
     int cmp = matchStart ? 1 : str.size();
     for(int i = 0; i < cmp; i++){
         currentState = dfaStart;
-        int lastAcc = -1;
 
-        for(int j = i; j < str.size(); j++){
+        for(std::size_t j = i; j < str.size(); j++){
             if(currentState->accept && !matchEnd)
                 return true;
             
@@ -120,7 +119,7 @@ std::vector<std::pair<int, std::string>> Regex::group(const std::string& str){
         currentState = dfaStart;
         int lastAcc = -1;
 
-        for(int j = i; j < str.size(); j++){
+        for(std::size_t j = i; j < str.size(); j++){
             if(currentState->accept)
                 lastAcc = reversed ? str.size()-j : j;
 

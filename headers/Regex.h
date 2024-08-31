@@ -33,8 +33,8 @@ class Regex{
     */
     class NFAState{
         public:
-        NFAState(int i): ID(i), out1(nullptr), out2(nullptr){}
-        int ID;
+        NFAState(): out1(nullptr), out2(nullptr){}
+        virtual ~NFAState() = default;
         NFAState* out1;
         NFAState* out2;
         virtual bool isEpsilon() = 0;
@@ -47,7 +47,7 @@ class Regex{
     */
     class NFAStateChar: public Regex::NFAState{
         public:
-        NFAStateChar(int, char);
+        NFAStateChar(char);
         char c;
         virtual bool isEpsilon();
         virtual bool hasChar(char);
@@ -59,8 +59,8 @@ class Regex{
     */
     class NFAStateCharClass: public Regex::NFAState{
         public:
-        NFAStateCharClass(int, std::string);
-        NFAStateCharClass(int, CharacterClass);
+        NFAStateCharClass(std::string);
+        NFAStateCharClass(CharacterClass);
         CharacterClass cc;
         virtual bool isEpsilon();
         virtual bool hasChar(char);
@@ -72,70 +72,69 @@ class Regex{
     */
     class NFAStateEpsilon: public Regex::NFAState{
         public:
-        NFAStateEpsilon(int);
+        NFAStateEpsilon();
         virtual bool isEpsilon();
         virtual bool hasChar(char);
         virtual NFAState* makeCopy();
+        virtual std::string toString(){ return "epsilon"; }
     };
 
     /*
         A DFAState, these states are generated as needed when matching a string against the regular expression
-        a state is a list of NFAState ids, with transitions on characters to other DFAStates
+        a state is a list of NFAStates, with transitions on characters to other DFAStates
     */
     struct DFAState{
-        DFAState(std::set<int>*);
-        DFAState(std::set<int>*, bool);
-        ~DFAState();
+        DFAState(std::set<Regex::NFAState*>);
+        DFAState(std::set<Regex::NFAState*>, bool);
         std::unordered_map<char, DFAState*> out;
-        std::set<int>* ls;
         bool accept;
+        std::set<Regex::NFAState*> ls;
     };
     /*
-        Hash for std::set<int>
+        Hash for std::set<Regex::NFAState*>
     */
     struct setHash{
-        std::size_t operator()(const std::set<int>* s) const{
-            std::size_t seed = s->size();
-            for(auto& i : *s) {
-                seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        std::size_t operator()(const std::set<Regex::NFAState*> s) const{
+            std::size_t seed = s.size();
+            for(auto i : s) {
+                seed ^= reinterpret_cast<uintptr_t>(i) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
             }
             return seed;
         }
     };
-    const int CACHELIMIT;
+    int id;
+    const std::size_t CACHELIMIT;
     std::string reg;
     bool matchStart;
     bool matchEnd;
     bool reversed;
-    int nfaStart;
-    int nfaAcc;
-    int id;
-    // lookup nfa state by its id
-    std::unordered_map<int, NFAState*> nfa;
+    Regex::NFAState* nfaStart;
+    Regex::NFAState* nfaAcc;
     // lookup dfa state by its set of nfa states
-    std::unordered_map<std::set<int>*, Regex::DFAState*, setHash> dfa;
-    std::unordered_map<int, std::unordered_set<int>> epsilonClosureCache;
+    std::unordered_map<std::set<Regex::NFAState*>, Regex::DFAState*, setHash> dfa;
+    std::unordered_map<Regex::NFAState*, std::unordered_set<Regex::NFAState*>> epsilonClosureCache;
     Regex::DFAState* reject;
     Regex::DFAState* dfaStart;
     void parse();
     void deleteNFA();
     void deleteDFA(Regex::DFAState* st = nullptr);
-    void epsilonClosure(int, std::set<int>*);
+    void epsilonClosure(Regex::NFAState*, std::set<Regex::NFAState*>&);
     void buildDFAStart();
-    std::pair<Regex::NFAState*, std::vector<int>> parse(int&);
-    std::pair<Regex::NFAState*, std::vector<int>> parseGroup(int&);
-    std::pair<Regex::NFAState*, std::vector<int>> parseCharClass(int&);
-    std::pair<Regex::NFAState*, std::vector<int>> parseSpecial(int&);
-    std::pair<Regex::NFAState*, std::vector<int>> parseChar(int&);
-    std::pair<Regex::NFAState*, std::vector<int>> parseInterval(Regex::NFAState*, std::vector<int>, int&);
-    std::pair<Regex::NFAState*, std::vector<int>> doStar(Regex::NFAState*, std::vector<int>);
-    std::pair<Regex::NFAState*, std::vector<int>> doQuestion(Regex::NFAState*, std::vector<int>);
-    std::pair<Regex::NFAState*, std::vector<int>> doPlus(Regex::NFAState*, std::vector<int>);
-    std::pair<Regex::NFAState*, std::vector<int>> doPipe(Regex::NFAState*, std::vector<int>, int&);
-    std::pair<Regex::NFAState*, std::vector<int>> copy(std::unordered_set<int>&, int, std::vector<int>);
-    std::unordered_set<int> makeList(Regex::NFAState*, const std::vector<int>&) const;
+    std::pair<Regex::NFAState*, std::vector<Regex::NFAState*>> parse(std::size_t&);
+    std::pair<Regex::NFAState*, std::vector<Regex::NFAState*>> parseGroup(std::size_t&);
+    std::pair<Regex::NFAState*, std::vector<Regex::NFAState*>> parseCharClass(std::size_t&);
+    std::pair<Regex::NFAState*, std::vector<Regex::NFAState*>> parseSpecial(std::size_t&);
+    std::pair<Regex::NFAState*, std::vector<Regex::NFAState*>> parseChar(std::size_t&);
+    std::pair<Regex::NFAState*, std::vector<Regex::NFAState*>> parseInterval(Regex::NFAState*, std::vector<Regex::NFAState*>, std::size_t&);
+    std::pair<Regex::NFAState*, std::vector<Regex::NFAState*>> doStar(Regex::NFAState*, std::vector<Regex::NFAState*>);
+    std::pair<Regex::NFAState*, std::vector<Regex::NFAState*>> doQuestion(Regex::NFAState*, std::vector<Regex::NFAState*>);
+    std::pair<Regex::NFAState*, std::vector<Regex::NFAState*>> doPlus(Regex::NFAState*, std::vector<Regex::NFAState*>);
+    std::pair<Regex::NFAState*, std::vector<Regex::NFAState*>> doPipe(Regex::NFAState*, std::vector<Regex::NFAState*>, std::size_t&);
+    std::pair<Regex::NFAState*, std::vector<Regex::NFAState*>> copy(std::unordered_set<Regex::NFAState*>&, Regex::NFAState*, std::vector<Regex::NFAState*>);
+    std::unordered_set<Regex::NFAState*> makeList(Regex::NFAState*, const std::vector<Regex::NFAState*>&) const;
     Regex::DFAState* nextDFA(char, Regex::DFAState*);
     Regex::NFAState* makeEpsilonState();
     Regex::NFAState* makeCharState(char);
     Regex::NFAState* makeCharClassState(std::string);
+    void printStates();
 };

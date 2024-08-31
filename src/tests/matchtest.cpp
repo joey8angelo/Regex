@@ -1,4 +1,4 @@
-#include "../../headers/Regex.h"z
+#include "../headers/Regex.h"
 
 /*
     reg : regular expression
@@ -10,7 +10,7 @@
 void test(std::string reg, std::vector<std::vector<std::string>> cases){
     Regex r(reg);
     std::cout << reg << std::endl;
-    for(int i = 0; i < cases.size(); i++){
+    for(std::size_t i = 0; i < cases.size(); i++){
         std::pair<int, std::string> find = r.find(cases[i][0]);
         bool test = r.test(cases[i][0]);
         std::vector<std::pair<int, std::string>> group = r.group(cases[i][0]);
