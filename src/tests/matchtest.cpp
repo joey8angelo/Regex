@@ -1,4 +1,4 @@
-#include "../headers/Regex.h"
+#include "../../headers/Regex.h"
 
 /*
     reg : regular expression
