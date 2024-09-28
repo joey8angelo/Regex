@@ -42,7 +42,7 @@ r.group("hello friend! hello world! 123 hello world!");
 
 ## Special Symbols
 
-- \\\\ - Escape symbol, detailed in Special Escape Characters
+- \\ - Escape symbol, detailed in Special Escape Characters
 - . - Wildcard symbol, defined as [^\n\r]
 - ? - Zero or one operator, detailed in Operators
 - \* - Zero or more operator
@@ -71,7 +71,7 @@ Unary operators only have one operand on the left hand side. Any single characte
 The | operator has more than one operand. The | operates on the character/group/character class on its right hand side and its left hand side. For example, (abc|def|ghi) is equivalent to ab(c|d)e(f|g)hi. To write the previous example correctly would be (abc)|(def)|(ghi). Chained alternations parse recursively, so this examples NFA would more closely resemble (abc)|((def)|(ghi)). 
 
 ## Character Classes
-A character class is defined with []. Any symbol inside is treated literally except for some special symbols, '-', '[', ']', which must be escaped: \\\\[, \\\\], \\\\-.
+A character class is defined with []. Any symbol inside is treated literally except for some special symbols, '-', '[', ']', which must be escaped: \\[, \\], \\-.
 
 Character classes cannot be nested, which means that escaped special characters will be treated as normal characters: [\\w] -> [w].
 
@@ -89,4 +89,4 @@ Escape characters have special meanings within the regular expression. Any built
 - \\w - Word characters, [a-zA-Z0-9_]
 - \\W - Non-word characters, [^a-zA-Z0-9_]
 
-If the character following the \\\\ is not a special character then it will be treated literally, good for escaping special symbols like operators \\\\?.
+If the character following the \\ is not a special character then it will be treated literally, good for escaping special symbols like operators \\?.
