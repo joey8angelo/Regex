@@ -35,8 +35,8 @@ void Regex::parse(){
     or if reverse is toggled concatenate the existing expression to the next subexpression
 */
 std::pair<Regex::NFAState*, std::vector<int>> Regex::parse(int& currPos){
-    Regex::NFAState*i,*s;
-    std::vector<int> c,e;
+    Regex::NFAState*i,*s; // start, subsection start
+    std::vector<int> c,e; // end, subsection end
     i = nullptr;
     for(;currPos < reg.size(); currPos++){
         std::pair<Regex::NFAState*, std::vector<int>> temp;
