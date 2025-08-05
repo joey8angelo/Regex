@@ -19,26 +19,22 @@ Include the header file.
 
 ```c++
 #include <Regex/Regex.h>
-```
 
-Supply the regular expression through the Regex constructor.
-
-```c++
 Regex r("hello (friend)|(world)!");
 ```
 
-- Regex::find(std::string) - returns a std::pair<int, std::string> denoting the position of the match and the string that was matched. If there is no match the pair will be (-1, "").
+- Regex::find(std::string) - returns a std::tuple<bool, size_t, size_t> denoting if a match was found and the start and end position of the match. If there is no match the tuple will be (false, 0, 0).
 
 ```c++
 r.find("hello friend!");
-    // returns (0, "hello friend!")
+    // returns (true, 0, 13)
 r.find("goodbye... actually hello world! is what I meant");
-    // returns (20, "hello world!")
+    // returns (true, 20, 32)
 r.find("goodbye world, for real");
-    // returns (-1, "")
+    // returns (false, 0, 0)
 ```
 
-- Regex::test(std::string) - returns a boolean value if there is any matches in the string. The worst case for this function is much faster than find.
+- Regex::test(std::string) - returns a boolean value if there are any matches in the string.
 
 ```c++
 r.test("hello world!");
@@ -49,11 +45,11 @@ r.test("hello 123 world!");
     // returns false
 ```
 
-- Regex::group(std::string) - returns a std::vector<std::pair<int, std::string>>, the position and substring of each match from the left of the input string. If there are no matches then the vector will be empty.
+- Regex::find_all(std::string) - returns a std::vector<std::pair<size_t, size_t>>, a vector of start and end positions of each match in the string. If there are no matches then the vector will be empty.
 
 ```c++
-r.group("hello friend! hello world! 123 hello world!");
-    // returns {(0, "hello friend!), (14, "hello world!), (31, "hello world!")}
+r.find_all("hello friend! hello world! 123 hello world!");
+    // returns {(0, 13), (14, 26), (31, 43)}
 ```
 
 ## Special Symbols
