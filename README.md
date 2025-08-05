@@ -4,7 +4,23 @@ A C++ implementation of a regular expression engine. This engine uses a varitati
 ![RegexFind](RegexFind.png)
 Matching a<sup>n</sup> against a?<sup>n</sup>a<sup>n</sup>. Regex(blue) compared to other regular expression implementations. This example is superlinear O(nm) as the regular expression and string grow linearly.
 
+## Installation
+```bash
+git clone https://github.com/joey8angelo/Regex
+cd Regex
+mkdir build
+cd build
+cmake ..
+make install
+```
+
 ## Usage
+Include the header file.
+
+```c++
+#include <Regex/Regex.h>
+```
+
 Supply the regular expression through the Regex constructor.
 
 ```c++
@@ -68,7 +84,7 @@ Unary operators only have one operand on the left hand side. Any single characte
 	+ {a,b} - Two comma separated digits means repeat the operand a-b times
 
 ### Alternation Operator
-The | operator has more than one operand. The | operates on the character/group/character class on its right hand side and its left hand side. For example, (abc|def|ghi) is equivalent to ab(c|d)e(f|g)hi. To write the previous example correctly would be (abc)|(def)|(ghi). Chained alternations parse recursively, so this examples NFA would more closely resemble (abc)|((def)|(ghi)). 
+The | operator has more than one operand. The | operates on the character/group/character class on its right hand side and its left hand side. For example, (abc|def|ghi) is equivalent to ab(c|d)e(f|g)hi. To write the previous example correctly would be (abc)|(def)|(ghi). Chained alternations parse recursively, so this examples NFA would more closely resemble (abc)|((def)|(ghi)).
 
 ## Character Classes
 A character class is defined with []. Any symbol inside is treated literally except for some special symbols, '-', '[', ']', which must be escaped: \\[, \\], \\-.
