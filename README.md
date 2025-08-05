@@ -1,7 +1,7 @@
 # Regex
 
 A C++ implementation of a regular expression engine. This engine uses a varitation of Thompson's NFA construction, where each character/metacharacter creates exactly one state, to build an NFA from a regular expression, it then does a BFS through the NFA over an input to determine a match. Matching a full string against the NFA is O(m) time where m is the size of the string.
-![RegexFind](RegexFind.png)
+![speeds](speeds.png)
 Matching a<sup>n</sup> against a?<sup>n</sup>a<sup>n</sup>. Regex(blue) compared to other regular expression implementations. This example is superlinear O(nm) as the regular expression and string grow linearly.
 
 ## Installation
